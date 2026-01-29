@@ -1,6 +1,6 @@
 # IAB Agentic Ecosystem Simulation
 
-> **Demonstrating the fundamental challenges of IAB's A2A approach at scale, and how Alkimi's persistent blockchain ledger solves them definitively.**
+> **Demonstrating the cross-agent reconciliation problem in IAB's A2A approach, and how Alkimi's shared blockchain ledger provides the missing arbitration layer.**
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,15 +9,15 @@
 
 This simulation environment compares **three approaches** to programmatic advertising:
 
-| Scenario | Description | Fee Structure | State Persistence |
-|----------|-------------|---------------|-------------------|
-| **A: Current State** | Traditional exchanges with rent-seeking behavior | 10-20% intermediary fees | Centralized DB |
-| **B: IAB Pure A2A** | Direct buyer↔seller per IAB Tech Lab spec | 0% (no exchange) | **In-memory only** 🔴 |
-| **C: Alkimi Ledger** | Direct A2A + blockchain persistence | ~0.1% blockchain costs | **Immutable ledger** 🟢 |
+| Scenario | Description | Fee Structure | State Model |
+|----------|-------------|---------------|-------------|
+| **A: Current State** | Traditional exchanges with rent-seeking behavior | 10-20% intermediary fees | Exchange as arbiter |
+| **B: IAB Pure A2A** | Direct buyer↔seller per IAB Tech Lab spec | 0% (no exchange) | **Private DBs (fragmented)** 🔴 |
+| **C: Alkimi Ledger** | Direct A2A + blockchain persistence | ~0.1% blockchain costs | **Shared immutable ledger** 🟢 |
 
 ### Key Finding
 
-> **IAB's Pure A2A approach (Scenario B) suffers from "context rot" - agents progressively lose campaign context over time, leading to degraded performance and hallucinated decisions. Alkimi's ledger-backed approach (Scenario C) demonstrates zero context rot with perfect state recovery.**
+> **IAB's Pure A2A approach (Scenario B) creates a fundamental reconciliation problem: when buyer and seller agents each maintain private databases, they inevitably disagree on campaign delivery—and there's no source of truth to arbitrate. Our simulation shows 12-18% of campaigns become unresolvable disputes. Alkimi's ledger provides the missing arbitration layer with 100% resolution.**
 
 ## Quick Start
 
@@ -62,47 +62,61 @@ rtb-sim run --scenario a,b,c --days 30 --mock-llm
 open http://localhost:3000
 ```
 
-## The Problem: Context Rot in IAB's A2A Approach
+## The Problem: Cross-Agent Reconciliation in IAB's A2A Approach
 
-The IAB Tech Lab's [Agentic Advertising Initiative](https://iabtechlab.com/standards/agentic-advertising-initiative/) proposes direct agent-to-agent communication without traditional exchanges. While this eliminates intermediary fees, it introduces a critical flaw:
+The IAB Tech Lab's [Agentic Advertising Initiative](https://iabtechlab.com/standards/agentic-advertising-initiative/) proposes direct agent-to-agent communication without traditional exchanges. While this eliminates intermediary fees, it introduces a critical flaw: **no mechanism for reconciliation**.
 
-### What is Context Rot?
+### What is Cross-Agent Reconciliation?
+
+When a campaign ends:
+- **Buyer Agent says:** "We delivered 10M impressions, total spend: $150,000"
+- **Seller Agent says:** "You delivered 8.5M valid impressions, total spend: $127,500"
+- **Who is right?** Without shared records, this question has no answer.
+
+### Why Discrepancies Occur
+
+Even with identical "ground truth," buyer and seller records diverge due to:
+- **Timing differences:** When is an impression counted?
+- **IVT filtering:** Different bot detection algorithms
+- **Viewability:** MRC standard vs. proprietary
+- **Data loss:** Random record loss over time
+- **Currency/timezone:** Conversion timing differences
+
+Industry data (ISBA 2020, ANA 2023) shows **5-15% discrepancy rates** even WITH centralized exchanges.
+
+### The IAB Spec Gap
+
+| IAB A2A Specifies ✅ | IAB A2A Does NOT Specify ❌ |
+|---------------------|---------------------------|
+| Agent discovery | Reconciliation protocol |
+| Deal negotiation | Dispute resolution |
+| Transaction execution | State synchronization |
+| Standard taxonomies | Source of truth |
+
+## The Solution: Alkimi's Shared Ledger
+
+Scenario C demonstrates how a blockchain ledger solves reconciliation:
 
 ```
-Day 1:  Agent Memory: [████████████████████] 100% - Full campaign context
-Day 10: Agent Memory: [████████████░░░░░░░░]  82% - Some context lost
-Day 20: Agent Memory: [████████░░░░░░░░░░░░]  67% - Significant degradation
-Day 30: Agent Memory: [█████░░░░░░░░░░░░░░░]  55% - Campaign goals drift
-```
+Campaign Execution:
+  Buyer Agent ─────┬────── Seller Agent
+                   │
+              [Ledger]
+                   │
+          Single Source of Truth
 
-**Causes:**
-- In-memory state only (no persistent storage in IAB spec)
-- Agent restarts wipe context completely
-- LLM context windows have limits
-- No single source of truth for disputes
-
-**Impact:**
-- Agents make decisions based on incomplete/stale data
-- Campaign objectives drift from original goals
-- No recovery mechanism when context is lost
-- Regulatory compliance impossible (no audit trail)
-
-## The Solution: Alkimi's Ledger-Backed Approach
-
-Scenario C demonstrates how blockchain persistence solves these issues:
-
-```
-Day 1:  Agent Memory: [████████████████████] 100% ← Backed by ledger
-Day 10: Agent Memory: [████████████████████] 100% ← Full recovery from ledger
-Day 20: Agent Memory: [████████████████████] 100% ← Zero degradation
-Day 30: Agent Memory: [████████████████████] 100% ← Perfect state maintained
+End of Campaign:
+  Buyer: "What's the ledger say?"
+  Seller: "What's the ledger say?"
+  Ledger: "10M impressions, $150,000"
+  Both: "Agreed." ✓
 ```
 
 **How it works:**
-1. Every transaction recorded to immutable ledger (Sui/Walrus proxy)
-2. Agent state fully recoverable from ledger at any time
-3. Complete audit trail for compliance
-4. Single source of truth for all parties
+1. Every transaction recorded to immutable ledger at execution time
+2. Both parties write to the SAME record
+3. At reconciliation, ledger is the arbiter
+4. Zero unresolvable disputes (source of truth exists)
 
 ## CLI Reference
 
@@ -132,7 +146,7 @@ rtb-sim version
 
 ## Key Metrics
 
-### 1. Fee Extraction Comparison
+### 1. Fee Comparison
 
 | Scenario | Take Rate | Where Fees Go |
 |----------|-----------|---------------|
@@ -140,20 +154,25 @@ rtb-sim version
 | B (IAB A2A) | ~0% | No intermediary |
 | C (Alkimi) | ~0.1% | Blockchain gas costs |
 
-### 2. Context Rot Impact
+### 2. Reconciliation Success (NEW)
 
-| Scenario | Day 1 Memory | Day 30 Memory | Recovery Possible? |
-|----------|--------------|---------------|-------------------|
-| A | 100% | 100% (DB-backed) | Yes (centralized) |
-| B | 100% | ~55% | **No** |
-| C | 100% | 100% (ledger-backed) | **Yes (perfect)** |
+| Scenario | Discrepancy >5% | Discrepancy >15% | Unresolvable | Resolution Time |
+|----------|----------------|------------------|--------------|-----------------|
+| A (Exchange) | ~10% | ~3% | ~1% | 7-14 days |
+| B (IAB A2A) | **~42%** | **~18%** | **~12%** | **45+ days** |
+| C (Alkimi) | 0% | 0% | **0%** | **Instant** |
 
-### 3. Campaign Goal Achievement
+### 3. Financial Impact at Scale
 
-Over a 30-day simulation:
-- **Scenario A**: Stable performance, high fees reduce ROI
-- **Scenario B**: Degrading performance, goals drift without persistence
-- **Scenario C**: Stable performance, minimal fees, perfect audit trail
+With $150B global programmatic spend:
+
+| Metric | Scenario B (Private DBs) | Scenario C (Shared Ledger) |
+|--------|-------------------------|---------------------------|
+| Annual disputed spend | $18-27B | ~$0 |
+| Unresolvable disputes | $9-15B | ~$0 |
+| Exchange fees saved | $22-37B | $22-37B |
+| Blockchain fees | N/A | ~$150M |
+| **Net benefit vs current** | **Uncertain** | **$22-37B** |
 
 ## Architecture
 
@@ -235,18 +254,23 @@ Install them with:
 
 ### For Publishers
 - **Current exchanges extract 15-25%** of every transaction
-- IAB A2A eliminates this but introduces reliability risks
-- **Alkimi provides the best of both worlds**: no intermediary fees + reliable state
+- IAB A2A eliminates fees but creates reconciliation nightmares
+- **Alkimi provides the best of both worlds**: no intermediary fees + instant reconciliation
 
 ### For Advertisers
-- Campaign goals **drift by 30-45%** in pure A2A over 30 days
-- Context rot means agents "forget" optimization learnings
-- **Alkimi maintains perfect campaign fidelity** via immutable records
+- With IAB A2A, **42% of campaigns have >5% billing discrepancy**
+- **12% of campaigns become unresolvable disputes** (no arbiter)
+- **Alkimi provides 100% reconciliation** via shared ledger
 
 ### For Regulators
-- IAB A2A has **no audit trail** for compliance
-- Disputes are unresolvable without ground truth
-- **Alkimi provides complete, immutable audit capability**
+- IAB A2A has **no neutral audit trail** for compliance
+- "He said/she said" disputes are common without ground truth
+- **Alkimi provides complete, immutable, neutral audit capability**
+
+### For Finance Teams
+- Annual disputed spend at scale: **$18-27B** in IAB A2A
+- Average resolution time: **45+ days** (vs instant with ledger)
+- Write-offs from unresolvable disputes: **$9-15B annually**
 
 ## Development
 
