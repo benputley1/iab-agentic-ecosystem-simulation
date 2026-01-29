@@ -50,6 +50,29 @@ def pytest_configure(config):
     )
 
 
+def _redis_available():
+    """Check if Redis is available."""
+    import socket
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)
+        result = sock.connect_ex(('localhost', 6379))
+        sock.close()
+        return result == 0
+    except Exception:
+        return False
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip integration tests if Redis is not available."""
+    if _redis_available():
+        return
+    skip_integration = pytest.mark.skip(reason="Redis not available")
+    for item in items:
+        if "integration" in item.keywords:
+            item.add_marker(skip_integration)
+
+
 @pytest.fixture
 def sample_bid_request():
     """Sample bid request for testing."""

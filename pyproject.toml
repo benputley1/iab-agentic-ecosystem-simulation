@@ -39,6 +39,7 @@ full = [
     "anthropic>=0.18",
     "litellm>=1.0",
     "httpx>=0.25",
+    "pydantic-settings>=2.0",
 
     # CLI
     "typer>=0.9",
