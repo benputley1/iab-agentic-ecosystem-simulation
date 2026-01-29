@@ -48,6 +48,9 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "integration: mark test as requiring external services (Redis, etc.)"
     )
+    config.addinivalue_line(
+        "markers", "requires_redis: mark test as requiring a running Redis server"
+    )
 
 
 def _redis_available():
@@ -64,13 +67,20 @@ def _redis_available():
 
 
 def pytest_collection_modifyitems(config, items):
-    """Skip integration tests if Redis is not available."""
-    if _redis_available():
-        return
-    skip_integration = pytest.mark.skip(reason="Redis not available")
+    """Skip integration tests by default, and Redis tests if Redis unavailable."""
+    redis_available = _redis_available()
+
+    # Skip markers
+    skip_integration = pytest.mark.skip(reason="Integration tests skipped by default")
+    skip_redis = pytest.mark.skip(reason="Redis not available")
+
     for item in items:
+        # Skip integration tests by default
         if "integration" in item.keywords:
             item.add_marker(skip_integration)
+        # Skip Redis tests if Redis unavailable
+        elif "requires_redis" in item.keywords and not redis_available:
+            item.add_marker(skip_redis)
 
 
 @pytest.fixture

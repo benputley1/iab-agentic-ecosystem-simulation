@@ -9,6 +9,9 @@ Tests the full flow:
 """
 
 import pytest
+
+# Mark entire module as integration tests (require Redis)
+pytestmark = pytest.mark.integration
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Import only what we can test without crewai

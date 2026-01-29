@@ -99,6 +99,11 @@ class ScenarioMetrics:
 class ScenarioConfig:
     """Configuration for running a scenario."""
 
+    # Scenario identification
+    scenario_code: str = "A"
+    name: str = "Unnamed Scenario"
+    description: str = ""
+
     # Agent counts
     num_buyers: int = 5
     num_sellers: int = 5
@@ -117,6 +122,10 @@ class ScenarioConfig:
 
     # Scenario-specific
     exchange_fee_pct: float = 0.15  # Scenario A: 15% default
+
+    # Scenario B specific (context rot simulation)
+    context_decay_rate: float = 0.05  # Daily context decay rate
+    hallucination_rate: float = 0.1  # Probability of hallucination injection
 
 
 class BaseScenario(ABC):
