@@ -1,6 +1,6 @@
-{"type": "campaign", "fields": {"id": "string", "buyer_id": "string", "budget": "number", "kpi": "string", "status": "string"}}
-{"type": "deal", "fields": {"id": "string", "campaign_id": "string", "seller_id": "string", "impressions": "number", "cpm": "number", "scenario": "string"}}
-{"type": "bid", "fields": {"id": "string", "campaign_id": "string", "seller_id": "string", "offered_cpm": "number", "status": "string"}}
-{"type": "transaction", "fields": {"id": "string", "deal_id": "string", "buyer_spend": "number", "seller_revenue": "number", "exchange_fee": "number"}}
-{"type": "hallucination", "fields": {"id": "string", "agent_id": "string", "claim_type": "string", "claimed_value": "string", "actual_value": "string"}}
-{"type": "context-rot", "fields": {"id": "string", "agent_id": "string", "day": "number", "keys_lost": "array", "recovery_accuracy": "number"}}
+{"type": "campaign", "description": "RTB campaign tracking", "fields": {"id": "string", "buyer_id": "string", "budget": "number", "kpi": "string", "status": "string", "scenario": "string"}}
+{"type": "deal", "description": "Completed deal between buyer and seller", "fields": {"id": "string", "campaign_id": "string", "seller_id": "string", "impressions": "number", "cpm": "number", "scenario": "string"}}
+{"type": "bid", "description": "Bid request/response tracking", "fields": {"id": "string", "campaign_id": "string", "seller_id": "string", "offered_cpm": "number", "status": "string"}}
+{"type": "transaction", "description": "Financial transaction record", "fields": {"id": "string", "deal_id": "string", "buyer_spend": "number", "seller_revenue": "number", "exchange_fee": "number"}}
+{"type": "hallucination", "description": "Agent decision based on fabricated data", "fields": {"id": "string", "agent_id": "string", "claim_type": "string", "claimed_value": "string", "actual_value": "string"}}
+{"type": "context-rot", "description": "Context loss event tracking", "fields": {"id": "string", "agent_id": "string", "day": "number", "keys_lost": "array", "recovery_accuracy": "number"}}
