@@ -678,9 +678,9 @@ class ScenarioB(BaseScenario):
     async def run_day(
         self,
         day: int,
-        buyers: list[Any],
-        sellers: list[Any],
-    ) -> dict:
+        buyers: Optional[list[Any]] = None,
+        sellers: Optional[list[Any]] = None,
+    ) -> list[DealConfirmation]:
         """
         Execute one simulation day for Scenario B.
 
@@ -693,11 +693,11 @@ class ScenarioB(BaseScenario):
 
         Args:
             day: Simulation day (1-30)
-            buyers: List of buyer agent wrappers
-            sellers: List of seller adapters
+            buyers: Optional list of buyer agent wrappers
+            sellers: Optional list of seller adapters
 
         Returns:
-            Dict with day's metrics
+            List of deals created
         """
         self.current_day = day
         day_start = datetime.utcnow()
@@ -713,30 +713,60 @@ class ScenarioB(BaseScenario):
             "hallucinations_injected": 0,
         }
 
+        # If no buyers/sellers provided, simulate internally
+        num_buyers = len(buyers) if buyers else self.config.num_buyers
+        num_sellers = len(sellers) if sellers else self.config.num_sellers
+
         logger.info(
             "scenario_b.day_start",
             day=day,
-            buyers=len(buyers),
-            sellers=len(sellers),
+            buyers=num_buyers,
+            sellers=num_sellers,
         )
 
-        # Run bidding cycles for each buyer
-        for buyer in buyers:
-            try:
-                # Run buyer's bidding cycle
-                deals = await buyer.run_bidding_cycle(max_iterations=5)
+        deals_created = []
 
-                for deal in deals:
-                    day_metrics["deals_made"] += 1
-                    day_metrics["total_spend"] += deal.total_cost
-                    day_metrics["total_impressions"] += deal.impressions
+        # If no external buyers, run simulated deals
+        if not buyers:
+            # Simulate deals for the day
+            for i in range(num_buyers):
+                buyer_id = f"buyer-{i+1:03d}"
+                for j in range(num_sellers):
+                    seller_id = f"seller-{j+1:03d}"
+                    # 30% chance of a deal per buyer-seller pair
+                    if self._random.random() < 0.3:
+                        impressions = self._random.randint(50000, 500000)
+                        cpm = self._random.uniform(5.0, 25.0)
+                        deal = await self.create_deal(
+                            buyer_id=buyer_id,
+                            seller_id=seller_id,
+                            impressions=impressions,
+                            cpm=cpm,
+                        )
+                        if deal:
+                            deals_created.append(deal)
+                            day_metrics["deals_made"] += 1
+                            day_metrics["total_spend"] += deal.total_cost
+                            day_metrics["total_impressions"] += deal.impressions
+        else:
+            # Run bidding cycles for each provided buyer
+            for buyer in buyers:
+                try:
+                    # Run buyer's bidding cycle
+                    deals = await buyer.run_bidding_cycle(max_iterations=5)
 
-            except Exception as e:
-                logger.error(
-                    "scenario_b.buyer_error",
-                    buyer_id=buyer.buyer_id,
-                    error=str(e),
-                )
+                    for deal in deals:
+                        deals_created.append(deal)
+                        day_metrics["deals_made"] += 1
+                        day_metrics["total_spend"] += deal.total_cost
+                        day_metrics["total_impressions"] += deal.impressions
+
+                except Exception as e:
+                    logger.error(
+                        "scenario_b.buyer_error",
+                        buyer_id=buyer.buyer_id,
+                        error=str(e),
+                    )
 
         # Apply end-of-day context rot
         rot_results = await self.apply_daily_context_rot()
@@ -753,10 +783,10 @@ class ScenarioB(BaseScenario):
             self._metrics_collector.record_daily_metrics(
                 scenario="B",
                 simulation_day=day,
-                goal_attainment=self._calculate_daily_goal_attainment(buyers),
+                goal_attainment=self._calculate_daily_goal_attainment(buyers or []),
                 context_losses=day_metrics["context_rot_events"],
                 recovery_accuracy=self._calculate_recovery_accuracy(),
-                active_campaigns=self._count_active_campaigns(buyers),
+                active_campaigns=self._count_active_campaigns(buyers or []),
                 total_spend=day_metrics["total_spend"],
             )
 
@@ -769,7 +799,15 @@ class ScenarioB(BaseScenario):
             duration_ms=(datetime.utcnow() - day_start).total_seconds() * 1000,
         )
 
-        return day_metrics
+        # Update scenario metrics
+        self.metrics.total_deals += day_metrics["deals_made"]
+        self.metrics.total_buyer_spend += day_metrics["total_spend"]
+        self.metrics.total_seller_revenue += day_metrics["total_spend"]  # No exchange fee in B
+        self.metrics.total_impressions += day_metrics["total_impressions"]
+        self.metrics.context_rot_events += day_metrics["context_rot_events"]
+        self.metrics.keys_lost_total += day_metrics["keys_lost"]
+
+        return deals_created
 
     def _calculate_daily_goal_attainment(self, buyers: list[Any]) -> float:
         """Calculate average goal attainment across buyers."""
