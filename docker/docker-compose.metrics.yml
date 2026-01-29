@@ -1,0 +1,66 @@
+# InfluxDB + Grafana for RTB Simulation Metrics
+# Standalone metrics stack - can be composed with main docker-compose.yml
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: rtb_influxdb
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_PASSWORD:-rtb_sim_dev}
+      DOCKER_INFLUXDB_INIT_ORG: alkimi
+      DOCKER_INFLUXDB_INIT_BUCKET: rtb_metrics
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_TOKEN:-rtb_sim_dev_token}
+    ports:
+      - "8086:8086"
+    volumes:
+      - influx_data:/var/lib/influxdb2
+      - influx_config:/etc/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rtb_network
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: rtb_grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: http://localhost:3000
+      # InfluxDB connection for provisioning
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_ORG: alkimi
+      INFLUX_TOKEN: ${INFLUX_TOKEN:-rtb_sim_dev_token}
+      INFLUX_BUCKET: rtb_metrics
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rtb_network
+
+volumes:
+  influx_data:
+  influx_config:
+  grafana_data:
+
+networks:
+  rtb_network:
+    driver: bridge
