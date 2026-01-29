@@ -1,0 +1,26 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    jsonData:
+      version: Flux
+      organization: alkimi
+      defaultBucket: rtb_metrics
+    secureJsonData:
+      token: ${INFLUX_TOKEN:-rtb_sim_dev_token}
+
+  - name: PostgreSQL
+    type: postgres
+    url: postgres:5432
+    database: rtb_simulation
+    user: rtb_sim
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD:-rtb_sim_dev}
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 10
+      maxIdleConns: 5
+      connMaxLifetime: 14400

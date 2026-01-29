@@ -1,0 +1,90 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: rtb_postgres
+    environment:
+      POSTGRES_USER: rtb_sim
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rtb_sim_dev}
+      POSTGRES_DB: rtb_simulation
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./postgres/ground_truth.sql:/docker-entrypoint-initdb.d/02-ground_truth.sql
+      - ./postgres/ledger.sql:/docker-entrypoint-initdb.d/03-ledger.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rtb_sim"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rtb_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: rtb_redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rtb_network
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: rtb_influxdb
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_PASSWORD:-rtb_sim_dev}
+      DOCKER_INFLUXDB_INIT_ORG: alkimi
+      DOCKER_INFLUXDB_INIT_BUCKET: rtb_metrics
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_TOKEN:-rtb_sim_dev_token}
+    ports:
+      - "8086:8086"
+    volumes:
+      - influx_data:/var/lib/influxdb2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rtb_network
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: rtb_grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      influxdb:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - rtb_network
+
+networks:
+  rtb_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  influx_data:
+  grafana_data:
