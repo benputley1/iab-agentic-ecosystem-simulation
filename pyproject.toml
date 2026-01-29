@@ -3,7 +3,6 @@ name = "iab-agentic-ecosystem-simulation"
 version = "0.1.0"
 description = "Simulation of IAB Agentic RTB Framework"
 requires-python = ">=3.11"
-readme = "README.md"
 
 dependencies = [
     # Core
