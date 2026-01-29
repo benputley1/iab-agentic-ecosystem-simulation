@@ -11,6 +11,9 @@ dependencies = [
     # Redis
     "redis>=5.0",
 
+    # PostgreSQL (for Scenario C ledger)
+    "asyncpg>=0.28",
+
     # Logging
     "structlog>=23.0",
 ]

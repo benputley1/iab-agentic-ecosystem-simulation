@@ -1279,6 +1279,7 @@ name = "iab-agentic-ecosystem-simulation"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "asyncpg" },
     { name = "pydantic" },
     { name = "redis" },
     { name = "structlog" },
@@ -1311,6 +1312,7 @@ full = [
 requires-dist = [
     { name = "alembic", marker = "extra == 'full'", specifier = ">=1.12" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.18" },
+    { name = "asyncpg", specifier = ">=0.28" },
     { name = "asyncpg", marker = "extra == 'full'", specifier = ">=0.28" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0" },
     { name = "crewai", marker = "extra == 'full'", specifier = ">=0.86.0" },
