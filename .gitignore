@@ -57,7 +57,7 @@ grafana_data/
 checkpoints/
 logs/
 /reports/
-content/
+/content/
 
 # macOS
 .DS_Store

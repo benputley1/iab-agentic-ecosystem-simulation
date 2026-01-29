@@ -8,9 +8,11 @@ Usage:
     python -m src.cli status
     python -m src.cli report --format markdown
     python -m src.cli kpis
+    python -m src.cli content --output content/
 """
 
 import typer
+from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -357,6 +359,105 @@ def compare(
 
     else:
         console.print("\n[yellow]Specify --day or --campaign to compare[/yellow]")
+
+
+@app.command()
+def content(
+    output: str = typer.Option("content", help="Output directory for articles"),
+    days: int = typer.Option(30, help="Simulation days for sample data"),
+    buyers: int = typer.Option(5, help="Number of buyers for sample data"),
+    sellers: int = typer.Option(5, help="Number of sellers for sample data"),
+    campaigns_per_buyer: int = typer.Option(10, help="Campaigns per buyer"),
+    use_sample: bool = typer.Option(True, "--sample/--real", help="Use sample or real simulation data"),
+):
+    """Generate article series from simulation results."""
+    console.print("[bold green]Generating Content Series[/bold green]")
+
+    from .logging.content import generate_sample_simulation, ArticleGenerator, FindingExtractor
+
+    # Generate or load event data
+    if use_sample:
+        console.print(f"  Generating sample simulation data...")
+        console.print(f"    Days: {days}")
+        console.print(f"    Buyers: {buyers}")
+        console.print(f"    Sellers: {sellers}")
+        console.print(f"    Campaigns per buyer: {campaigns_per_buyer}")
+        event_index = generate_sample_simulation(
+            days=days,
+            buyers=buyers,
+            sellers=sellers,
+            campaigns_per_buyer=campaigns_per_buyer,
+        )
+        console.print(f"  [green]Generated {len(event_index.events)} events[/green]")
+    else:
+        # TODO: Load real simulation data from logs
+        console.print("[yellow]Real data loading not yet implemented, using sample data[/yellow]")
+        event_index = generate_sample_simulation(days=days)
+
+    # Extract findings
+    console.print("\n  Extracting findings...")
+    extractor = FindingExtractor(event_index)
+    findings = extractor.extract_top_findings(count=10)
+
+    # Display findings summary
+    findings_table = Table(title="Top Findings")
+    findings_table.add_column("Rank", style="cyan", width=6)
+    findings_table.add_column("Category", style="magenta", width=15)
+    findings_table.add_column("Headline", style="green")
+    findings_table.add_column("Significance", style="yellow", width=12)
+
+    for i, finding in enumerate(findings, 1):
+        findings_table.add_row(
+            str(i),
+            finding.category.value,
+            finding.headline[:50] + "..." if len(finding.headline) > 50 else finding.headline,
+            "★" * finding.significance,
+        )
+
+    console.print(findings_table)
+
+    # Generate articles
+    console.print("\n  Generating articles...")
+    generator = ArticleGenerator(event_index)
+    output_path = Path(output)
+    written_files = generator.write_series(output_path)
+
+    console.print(f"\n[bold green]Content generation complete![/bold green]")
+    console.print(f"  Output directory: {output_path.absolute()}")
+    console.print(f"  Files written: {len(written_files)}")
+    for f in written_files:
+        console.print(f"    - {f.name}")
+
+
+@app.command()
+def findings(
+    count: int = typer.Option(5, help="Number of findings to display"),
+    days: int = typer.Option(30, help="Simulation days for sample data"),
+):
+    """Display top findings from simulation."""
+    console.print("[bold]Extracting Top Findings[/bold]")
+
+    from .logging.content import generate_sample_simulation, FindingExtractor
+
+    # Generate sample data
+    console.print("  Generating sample simulation data...")
+    event_index = generate_sample_simulation(days=days)
+    console.print(f"  [green]Generated {len(event_index.events)} events[/green]")
+
+    # Extract findings
+    extractor = FindingExtractor(event_index)
+    top_findings = extractor.extract_top_findings(count=count)
+
+    # Display each finding
+    for i, finding in enumerate(top_findings, 1):
+        console.print(f"\n[bold cyan]Finding #{i}: {finding.headline}[/bold cyan]")
+        console.print(f"[dim]Category: {finding.category.value} | Significance: {'★' * finding.significance}[/dim]")
+        console.print()
+        console.print(finding.summary)
+        console.print()
+        if finding.pull_quote:
+            console.print(f'[italic]"{finding.pull_quote}"[/italic]')
+        console.print("─" * 60)
 
 
 if __name__ == "__main__":
