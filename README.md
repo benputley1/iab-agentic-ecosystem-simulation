@@ -1,9 +1,23 @@
 # IAB Agentic Ecosystem Simulation
 
-> **Demonstrating the cross-agent reconciliation problem in IAB's A2A approach, and how Alkimi's shared blockchain ledger provides the missing arbitration layer.**
+> **Demonstrating why Alkimi provides critical infrastructure for IAB's Agentic Advertising future.**
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## Final Thesis Statement
+
+> **IAB's Agentic Advertising Initiative solves transaction *execution* but ignores transaction *verification*.**
+>
+> **Problem 1:** Even one agent making millions of decisions suffers from context rot and hallucinations.
+>
+> **Problem 2:** When buyer and seller agents each maintain private databases, disputes become unresolvable.
+>
+> **Alkimi's Solution:**
+> - **Sui blockchain** — Persistent, shared state that survives agent restarts
+> - **Walrus storage** — Immutable record of all transaction events
+> - **Seals** — Privacy-preserving verification (encrypt with programmable decryption)
+> - **AdFi pool** — Near-realtime settlement (0-1 days vs 90+ days)
 
 ## Executive Summary
 
@@ -293,11 +307,23 @@ python -m src.scenarios.scenario_c --mock-llm --skip-ledger
 
 MIT License - see [LICENSE](LICENSE) for details.
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [KEY_FINDINGS.md](./KEY_FINDINGS.md) | Executive talking points with final thesis |
+| [COMPREHENSIVE_RESEARCH.md](./docs/COMPREHENSIVE_RESEARCH.md) | Full research document with implementation plan |
+| [SUI_SEALS_INTEGRATION.md](./docs/SUI_SEALS_INTEGRATION.md) | How Seals enable privacy + verification |
+| [ADFI_SETTLEMENT_FLOW.md](./docs/ADFI_SETTLEMENT_FLOW.md) | Near-realtime settlement with AdFi |
+| [CROSS_AGENT_RECONCILIATION_RESEARCH.md](./docs/CROSS_AGENT_RECONCILIATION_RESEARCH.md) | Deep dive on reconciliation problem |
+| [RESEARCH_PLAN.md](./docs/RESEARCH_PLAN.md) | Methodology and hypothesis statements |
+
 ## Links
 
 - **IAB Tech Lab**: [Agentic Advertising Initiative](https://iabtechlab.com/standards/agentic-advertising-initiative/)
 - **Alkimi Exchange**: [alkimi.org](https://alkimi.org)
-- **Analysis Document**: [ANALYSIS.md](./content/ANALYSIS.md)
+- **Sui Network**: [sui.io](https://sui.io)
+- **Walrus**: [walrus.site](https://walrus.site)
 
 ---
 

@@ -1,13 +1,66 @@
 # Key Findings: Cross-Agent Reconciliation in IAB A2A
 
 > **Executive talking points from the IAB Agentic Ecosystem Simulation**  
-> Updated: 2026-01-29 - Reframed around reconciliation problem
+> Updated: 2026-01-29 - Final thesis incorporating Sui Seals and AdFi
+
+---
+
+## Final Thesis Statement
+
+> **IAB's Agentic Advertising Initiative solves transaction *execution* but ignores transaction *verification*. In a world of AI agents with volatile memory and private databases, this creates two fatal flaws:**
+>
+> **1. Single-agent context rot:** Even one agent making millions of decisions accumulates errors from hallucinations and memory loss, with no mechanism to verify decisions against ground truth.
+>
+> **2. Multi-agent reconciliation failure:** When buyer and seller agents each maintain private databases, campaign disputes become unresolvable—the Byzantine Generals Problem with only 2 parties.
+>
+> **Alkimi provides the missing infrastructure layer:**
+> - **Sui blockchain** provides persistent, shared state that survives agent restarts
+> - **Walrus blob storage** records all transaction events immutably  
+> - **Seals** enable privacy-preserving verification (see what you need, prove what you must)
+> - **AdFi pool** enables near-realtime settlement, eliminating 90-day payment delays
+>
+> **The result:** IAB's fee-free A2A vision, with Alkimi's verification and settlement layer, delivers the benefits of direct trading without the chaos of fragmented records and unresolvable disputes.
 
 ---
 
 ## TL;DR for Conversations
 
 **"The IAB's A2A approach creates a fundamental reconciliation problem: multiple agents, each with private databases, must agree on campaign results—but there's no shared source of truth. Our simulation shows that after 30 days, 12-18% of campaigns become unresolvable disputes, with $15-25B at risk annually in a $150B market. Alkimi's blockchain ledger provides the missing arbitration layer."**
+
+---
+
+## NEW: Single-Agent Limitations (Ben's Point)
+
+### The Context Window Reality
+
+Even ONE agent making millions of campaign decisions suffers from:
+
+| Model | Context Window | Campaign Data Capacity |
+|-------|----------------|------------------------|
+| Claude 3 Opus | 200K tokens | ~100K bid events |
+| GPT-4 Turbo | 128K tokens | ~64K bid events |
+
+**Campaign Reality:** A medium campaign generates **1-10M bid events** over 30 days. Context holds <0.01%.
+
+### How IAB Solves This: It Doesn't
+
+IAB specifies:
+- ✅ Agent discovery and negotiation
+- ✅ Standard taxonomies
+- ❌ Memory management
+- ❌ Context persistence
+- ❌ Hallucination detection
+
+### Simulation Evidence
+
+Over 31 days:
+- **32 context loss events**
+- **7 hallucinated decisions** (22% of losses)
+- Types: Imagined deals, invented prices, hallucinated inventory
+
+### Alkimi Solution
+
+Sui blockchain = persistent state that survives agent restarts. Agent can always recover from chain.
 
 ---
 
@@ -151,6 +204,62 @@ With just 2 parties (buyer and seller):
 | **Total cost** | **18-28%** | **~10%** | **~0.6%** |
 
 **Quote-worthy:** *"The blockchain doesn't forget. When buyer and seller disagree, the ledger is the arbitrator."*
+
+---
+
+## NEW: Sui Seals — Privacy + Verification
+
+### What Are Seals?
+
+**Programmable decryption** on Sui blockchain:
+- Data encrypted and stored on-chain
+- Smart contracts control who can decrypt
+- Privacy maintained while verification remains possible
+
+### A2A Application
+
+| Traditional A2A | With Seals |
+|-----------------|------------|
+| Bids visible to competitors | Bids encrypted until matched |
+| No verification of counterparty | Cryptographic proof of records |
+| Disputes = "he said/she said" | Disputes show exact divergence |
+| Manual reconciliation | Automated smart contract resolution |
+
+**Quote-worthy:** *"Seals let you see what you need and prove what you must — without exposing everything to everyone."*
+
+---
+
+## NEW: AdFi Pool — Near-Realtime Settlement
+
+### Current Settlement
+
+```
+Day 1-30:   Campaign runs
+Day 31-60:  Manual reconciliation
+Day 60-90:  Dispute resolution
+Day 90-120: Payment
+Total: 90-120 days
+```
+
+### AdFi Settlement
+
+```
+Day 1-30:   Campaign runs, events sealed to chain
+Day 30:     Smart contract auto-reconciles
+Day 30-31:  AdFi pool releases payment to publisher
+Total: 0-1 days post-campaign
+```
+
+### Key Metrics
+
+| Metric | Value |
+|--------|-------|
+| Publisher network | 9,700+ |
+| Historical default rate | 0% |
+| Target LP APY | 10-15% |
+| Settlement time | 0-1 days |
+
+**Quote-worthy:** *"Publishers get paid in 1 day instead of 90. LPs earn 10-15% APY. Zero reconciliation disputes."*
 
 ---
 
