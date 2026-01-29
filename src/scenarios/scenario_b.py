@@ -273,7 +273,14 @@ class ScenarioB(BaseScenario):
         context_rot_config: Optional[ContextRotConfig] = None,
         seed: Optional[int] = None,
     ):
-        super().__init__(config, redis_bus, metric_collector)
+        config = config or self._default_config()
+        super().__init__(
+            scenario_id="B",
+            scenario_name="IAB Pure A2A",
+            config=config,
+            redis_bus=redis_bus,
+            metric_collector=metric_collector,
+        )
 
         # Context rot simulation
         self._context_rot = ContextRotSimulator(context_rot_config, seed)
@@ -290,6 +297,9 @@ class ScenarioB(BaseScenario):
 
         # Active negotiations tracking
         self._active_negotiations: dict[str, dict] = {}
+
+        # Track connected state
+        self._connected = False
 
         # Random for simulation decisions
         self._random = random.Random(seed)
@@ -327,18 +337,46 @@ class ScenarioB(BaseScenario):
 
     async def connect(self) -> "ScenarioB":
         """Connect and initialize scenario-specific components."""
-        await super().connect()
+        if self._connected:
+            return self
 
-        # Set up hallucination manager
+        # Connect to Redis bus
+        await self.connect_bus()
+
+        # Connect to ground truth repository (optional, for verification)
+        try:
+            await self.connect_ground_truth()
+            # Wire ground truth to hallucination manager
+            if self._ground_truth_repo:
+                self._hallucination_mgr.set_db_connection(
+                    self._ground_truth_repo._pool
+                )
+        except Exception as e:
+            logger.warning(
+                "scenario_b.ground_truth_unavailable",
+                error=str(e),
+            )
+
+        # Set up hallucination manager metrics
         if self._metrics_collector:
             self._hallucination_mgr.set_metric_collector(self._metrics_collector)
+
+        self._connected = True
 
         logger.info(
             "scenario_b.connected",
             context_decay_rate=self.config.context_decay_rate,
             hallucination_rate=self.config.hallucination_rate,
+            has_ground_truth=self._ground_truth_repo is not None,
         )
         return self
+
+    async def disconnect(self) -> None:
+        """Disconnect from all services."""
+        await self.disconnect_bus()
+        await self.disconnect_ground_truth()
+        self._connected = False
+        logger.info("scenario_b.disconnected")
 
     # -------------------------------------------------------------------------
     # Memory Management
@@ -408,8 +446,20 @@ class ScenarioB(BaseScenario):
             impressions=request.impressions_requested,
         )
 
-        # Record decision (may be based on corrupted data)
-        self.record_decision(verified=False)  # No ground truth in B
+        # Record decision (may be based on corrupted data - no ground truth in B)
+        await self.record_decision(
+            verified=False,
+            agent_id=request.buyer_id,
+            agent_type="buyer",
+            decision_type="bid_request",
+            decision_input={
+                "campaign_id": request.campaign_id,
+                "channel": request.channel,
+                "max_cpm": request.max_cpm,
+                "impressions": request.impressions_requested,
+            },
+            decision_output={"request_id": request.request_id},
+        )
 
         # Note: Responses will be collected asynchronously
         return []
@@ -450,8 +500,20 @@ class ScenarioB(BaseScenario):
         # In real system, this would use LLM decision-making
         is_acceptable = offered_cpm <= request.max_cpm * 1.1  # 10% tolerance
 
-        # Record decision
-        self.record_decision(verified=False)
+        # Record decision (not verified - Scenario B has no ground truth accessible)
+        await self.record_decision(
+            verified=False,
+            agent_id=request.buyer_id,
+            agent_type="buyer",
+            decision_type="accept" if is_acceptable else "reject",
+            decision_input={
+                "request_id": request.request_id,
+                "offered_cpm": offered_cpm,
+                "max_cpm": request.max_cpm,
+                "seller_id": response.seller_id,
+            },
+            decision_output={"accepted": is_acceptable},
+        )
 
         if is_acceptable:
             # Create deal directly (no exchange fees)
@@ -537,7 +599,7 @@ class ScenarioB(BaseScenario):
     # Context Rot Simulation
     # -------------------------------------------------------------------------
 
-    def apply_daily_context_rot(self) -> dict[str, int]:
+    async def apply_daily_context_rot(self) -> dict[str, int]:
         """
         Apply context rot to all agent memories at end of day.
 
@@ -550,29 +612,62 @@ class ScenarioB(BaseScenario):
         for buyer_id, memory in self._buyer_memories.items():
             # Check for restart first
             if self._context_rot.check_restart(memory, self.current_day):
-                results[buyer_id] = memory.memory_size()
-                self.record_context_rot(buyer_id, memory.memory_size(), False)
+                keys_lost_count = memory.memory_size()
+                results[buyer_id] = keys_lost_count
+                # Record context rot event (restart = full wipe, is_decay=False)
+                await self.record_context_rot(
+                    agent_id=buyer_id,
+                    keys_lost=keys_lost_count,
+                    is_decay=False,
+                    agent_type="buyer",
+                    recovery_attempted=False,  # Scenario B has no recovery mechanism
+                    recovery_source="none",
+                )
             else:
                 # Apply gradual decay
-                keys_lost, _ = self._context_rot.apply_daily_decay(
+                keys_lost, lost_keys = self._context_rot.apply_daily_decay(
                     memory, self.current_day
                 )
                 if keys_lost > 0:
                     results[buyer_id] = keys_lost
-                    self.record_context_rot(buyer_id, keys_lost, True)
+                    await self.record_context_rot(
+                        agent_id=buyer_id,
+                        keys_lost=keys_lost,
+                        is_decay=True,
+                        agent_type="buyer",
+                        keys_lost_names=lost_keys,
+                        recovery_attempted=False,
+                        recovery_source="none",
+                    )
 
         # Apply to sellers
         for seller_id, memory in self._seller_memories.items():
             if self._context_rot.check_restart(memory, self.current_day):
-                results[seller_id] = memory.memory_size()
-                self.record_context_rot(seller_id, memory.memory_size(), False)
+                keys_lost_count = memory.memory_size()
+                results[seller_id] = keys_lost_count
+                await self.record_context_rot(
+                    agent_id=seller_id,
+                    keys_lost=keys_lost_count,
+                    is_decay=False,
+                    agent_type="seller",
+                    recovery_attempted=False,
+                    recovery_source="none",
+                )
             else:
-                keys_lost, _ = self._context_rot.apply_daily_decay(
+                keys_lost, lost_keys = self._context_rot.apply_daily_decay(
                     memory, self.current_day
                 )
                 if keys_lost > 0:
                     results[seller_id] = keys_lost
-                    self.record_context_rot(seller_id, keys_lost, True)
+                    await self.record_context_rot(
+                        agent_id=seller_id,
+                        keys_lost=keys_lost,
+                        is_decay=True,
+                        agent_type="seller",
+                        keys_lost_names=lost_keys,
+                        recovery_attempted=False,
+                        recovery_source="none",
+                    )
 
         return results
 
@@ -644,7 +739,7 @@ class ScenarioB(BaseScenario):
                 )
 
         # Apply end-of-day context rot
-        rot_results = self.apply_daily_context_rot()
+        rot_results = await self.apply_daily_context_rot()
         day_metrics["context_rot_events"] = len(rot_results)
         day_metrics["keys_lost"] = sum(rot_results.values())
 
