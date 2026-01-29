@@ -7,11 +7,14 @@ Usage:
     python -m src.cli run --scenario a,b,c --days 30 --buyers 5 --sellers 5
     python -m src.cli status
     python -m src.cli report --format markdown
+    python -m src.cli kpis
 """
 
 import typer
 from rich.console import Console
 from rich.table import Table
+from rich.panel import Panel
+from rich.markdown import Markdown
 
 app = typer.Typer(
     name="rtb-sim",
@@ -138,13 +141,61 @@ def status():
 def report(
     format: str = typer.Option("markdown", help="Output format (markdown, html, json)"),
     output: str = typer.Option(None, help="Output file path"),
+    title: str = typer.Option("RTB Simulation Comparative Report", help="Report title"),
+    influx_url: str = typer.Option(None, help="InfluxDB URL"),
+    influx_token: str = typer.Option(None, help="InfluxDB token"),
 ):
-    """Generate comparative report."""
+    """Generate comparative report across scenarios A, B, and C."""
+    from .reports import ReportGenerator, ReportConfig, ReportFormat
+    from .metrics.collector import InfluxConfig
+
     console.print(f"[bold]Generating Report[/bold]")
     console.print(f"  Format: {format}")
+    console.print(f"  Title: {title}")
 
-    # TODO: Import and run ReportGenerator when implemented
-    console.print("\n[yellow]ReportGenerator not yet implemented[/yellow]")
+    # Configure InfluxDB connection
+    influx_config = InfluxConfig()
+    if influx_url:
+        influx_config.url = influx_url
+    if influx_token:
+        influx_config.token = influx_token
+
+    # Validate format
+    try:
+        report_format = ReportFormat(format.lower())
+    except ValueError:
+        console.print(f"[red]Invalid format: {format}. Use markdown, html, or json.[/red]")
+        raise typer.Exit(1)
+
+    # Generate report
+    config = ReportConfig(
+        influx_config=influx_config,
+        output_format=report_format,
+        output_path=output,
+        title=title,
+    )
+
+    try:
+        generator = ReportGenerator(config)
+
+        with console.status("[bold green]Calculating KPIs..."):
+            generated = generator.generate()
+
+        if output:
+            console.print(f"\n[green]Report saved to: {output}[/green]")
+        else:
+            # Display to console
+            if format == "markdown":
+                console.print(Panel(Markdown(generated.content), title=title))
+            else:
+                console.print(generated.content)
+
+        console.print(f"\n[green]Report generated successfully![/green]")
+
+    except Exception as e:
+        console.print(f"\n[red]Error generating report: {e}[/red]")
+        console.print("[yellow]Make sure InfluxDB is running and contains simulation data.[/yellow]")
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -161,6 +212,151 @@ def seed():
     console.print("[bold]Seeding Database[/bold]")
     # TODO: Import and run seed data generation
     console.print("\n[yellow]Seed data generation not yet implemented[/yellow]")
+
+
+@app.command()
+def kpis(
+    scenario: str = typer.Option(None, help="Specific scenario (a, b, or c). Shows all if not specified."),
+    influx_url: str = typer.Option(None, help="InfluxDB URL"),
+    influx_token: str = typer.Option(None, help="InfluxDB token"),
+):
+    """Display KPI summary for scenarios."""
+    from .reports import generate_kpi_summary
+    from .metrics.collector import InfluxConfig
+
+    console.print("[bold]KPI Summary[/bold]\n")
+
+    influx_config = InfluxConfig()
+    if influx_url:
+        influx_config.url = influx_url
+    if influx_token:
+        influx_config.token = influx_token
+
+    try:
+        with console.status("[bold green]Querying InfluxDB..."):
+            kpis = generate_kpi_summary(influx_config)
+
+        # Fee Extraction Table
+        fee_table = Table(title="Fee Extraction Comparison")
+        fee_table.add_column("Scenario", style="cyan")
+        fee_table.add_column("Gross Spend", justify="right")
+        fee_table.add_column("Net to Publisher", justify="right")
+        fee_table.add_column("Intermediary Take", justify="right", style="red")
+        fee_table.add_column("Take Rate", justify="right")
+
+        scenarios_to_show = [scenario.upper()] if scenario else ["A", "B", "C"]
+
+        for s in scenarios_to_show:
+            fee = kpis.fee_extraction.get(s)
+            if fee:
+                fee_table.add_row(
+                    s,
+                    f"${fee.gross_spend:,.2f}",
+                    f"${fee.net_to_publisher:,.2f}",
+                    f"${fee.intermediary_take:,.2f}",
+                    f"{fee.take_rate_pct:.2f}%",
+                )
+
+        console.print(fee_table)
+        console.print()
+
+        # Goal Achievement Table
+        goal_table = Table(title="Campaign Goal Achievement")
+        goal_table.add_column("Scenario", style="cyan")
+        goal_table.add_column("Campaigns", justify="right")
+        goal_table.add_column("Goals Met", justify="right")
+        goal_table.add_column("Success Rate", justify="right", style="green")
+        goal_table.add_column("Avg Attainment", justify="right")
+
+        for s in scenarios_to_show:
+            goal = kpis.goal_achievement.get(s)
+            if goal:
+                goal_table.add_row(
+                    s,
+                    str(goal.total_campaigns),
+                    str(goal.hit_impression_goal),
+                    f"{goal.success_rate_pct:.1f}%",
+                    f"{goal.avg_goal_attainment:.1f}%",
+                )
+
+        console.print(goal_table)
+        console.print()
+
+        # Context Rot Impact (B vs C)
+        if not scenario or scenario.upper() in ["B", "C"]:
+            rot_table = Table(title="Context Rot Impact (B vs C)")
+            rot_table.add_column("Scenario", style="cyan")
+            rot_table.add_column("Rot Events", justify="right")
+            rot_table.add_column("Avg Keys Lost", justify="right")
+            rot_table.add_column("Recovery Accuracy", justify="right", style="green")
+            rot_table.add_column("Degradation", justify="right", style="red")
+
+            for s in ["B", "C"]:
+                if scenario and scenario.upper() != s:
+                    continue
+                rot = kpis.context_rot.get(s)
+                if rot:
+                    rot_table.add_row(
+                        s,
+                        str(rot.total_rot_events),
+                        f"{rot.avg_keys_lost:.1f}",
+                        f"{rot.avg_recovery_accuracy:.1%}",
+                        f"{rot.degradation_pct:.1f}%",
+                    )
+
+            console.print(rot_table)
+            console.print()
+
+        # Blockchain Costs (C only)
+        if (not scenario or scenario.upper() == "C") and kpis.blockchain_costs:
+            bc = kpis.blockchain_costs
+            bc_table = Table(title="Blockchain Infrastructure Costs (Scenario C)")
+            bc_table.add_column("Metric", style="cyan")
+            bc_table.add_column("Value", justify="right", style="green")
+
+            bc_table.add_row("Total Transactions", f"{bc.total_transactions:,}")
+            bc_table.add_row("Total Sui Gas", f"{bc.total_sui_gas:,.4f} SUI")
+            bc_table.add_row("Total Walrus Storage", f"{bc.total_walrus_cost:,.4f} SUI")
+            bc_table.add_row("Total USD Cost", f"${bc.total_usd:,.2f}")
+            bc_table.add_row("Cost per 1k Impressions", f"${bc.cost_per_1k_impressions:,.4f}")
+            bc_table.add_row("Exchange Fee per 1k (comparison)", f"${bc.comparison_exchange_fee_per_1k:,.2f}")
+
+            console.print(bc_table)
+            console.print()
+
+        # Summary metrics
+        if kpis.fee_reduction_pct > 0:
+            console.print(Panel(
+                f"[bold green]Fee Reduction (A→C):[/bold green] {kpis.fee_reduction_pct:.0f}%\n"
+                f"[bold green]Savings per $100k:[/bold green] ${kpis.savings_per_100k:,.2f}\n"
+                f"[bold green]Reliability Advantage (C vs B):[/bold green] {kpis.reliability_advantage:.1%}",
+                title="Comparative Metrics",
+            ))
+
+    except Exception as e:
+        console.print(f"\n[red]Error querying KPIs: {e}[/red]")
+        console.print("[yellow]Make sure InfluxDB is running and contains simulation data.[/yellow]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def compare(
+    day: int = typer.Option(None, help="Compare specific simulation day"),
+    campaign: str = typer.Option(None, help="Compare specific campaign across scenarios"),
+):
+    """Compare scenarios for a specific day or campaign."""
+    console.print("[bold]Scenario Comparison[/bold]")
+
+    if day:
+        console.print(f"\n[cyan]Day {day} Comparison:[/cyan]")
+        console.print("[yellow]Requires event data from running simulation[/yellow]")
+
+    elif campaign:
+        console.print(f"\n[cyan]Campaign {campaign} Comparison:[/cyan]")
+        console.print("[yellow]Requires event data from running simulation[/yellow]")
+
+    else:
+        console.print("\n[yellow]Specify --day or --campaign to compare[/yellow]")
 
 
 if __name__ == "__main__":

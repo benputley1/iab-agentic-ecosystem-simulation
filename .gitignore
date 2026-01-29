@@ -56,7 +56,7 @@ grafana_data/
 # Simulation outputs
 checkpoints/
 logs/
-reports/
+/reports/
 content/
 
 # macOS
