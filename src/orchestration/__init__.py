@@ -7,6 +7,9 @@ Gastown orchestration, and the scenario-specific agent implementations.
 Modules:
 - convoy_sync: Campaign-to-Convoy mapping for Gastown integration
 - logger: OrchestrationLogger for comprehensive event/narrative logging
+- time_controller: Time acceleration for simulation
+- event_injector: Chaos testing and event injection
+- run_simulation: Main simulation runner
 """
 
 from .convoy_sync import (
@@ -27,6 +30,28 @@ from .logger import (
     shutdown_orchestration_logger,
 )
 
+from .time_controller import (
+    TimeController,
+    TimeControllerConfig,
+    TimeControllerState,
+    ScheduledEvent,
+)
+
+from .event_injector import (
+    EventInjector,
+    EventType,
+    InjectedEvent,
+    ChaosConfig,
+)
+
+from .run_simulation import (
+    SimulationRunner,
+    SimulationConfig,
+    SimulationState,
+    SimulationResult,
+    ScenarioResult,
+)
+
 
 __all__ = [
     # Convoy types
@@ -44,4 +69,20 @@ __all__ = [
     "OrchLoggerConfig",
     "get_orchestration_logger",
     "shutdown_orchestration_logger",
+    # Time controller
+    "TimeController",
+    "TimeControllerConfig",
+    "TimeControllerState",
+    "ScheduledEvent",
+    # Event injector
+    "EventInjector",
+    "EventType",
+    "InjectedEvent",
+    "ChaosConfig",
+    # Simulation runner
+    "SimulationRunner",
+    "SimulationConfig",
+    "SimulationState",
+    "SimulationResult",
+    "ScenarioResult",
 ]
