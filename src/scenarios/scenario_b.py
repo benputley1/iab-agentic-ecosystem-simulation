@@ -737,12 +737,29 @@ class ScenarioB(BaseScenario):
                     if self._random.random() < 0.3:
                         impressions = self._random.randint(50000, 500000)
                         cpm = self._random.uniform(5.0, 25.0)
-                        deal = await self.create_deal(
+                        
+                        # Create simulated request and response
+                        request = BidRequest(
+                            request_id=f"req-{self._random.randint(10000,99999)}-{day}",
                             buyer_id=buyer_id,
-                            seller_id=seller_id,
-                            impressions=impressions,
-                            cpm=cpm,
+                            campaign_id=f"camp-{buyer_id}-{j+1:03d}",
+                            channel=self._random.choice(["display", "video", "ctv"]),
+                            impressions_requested=impressions,
+                            max_cpm=cpm * 1.2,  # Buyer willing to pay up to 20% more
+                            scenario="B",
                         )
+                        
+                        response = BidResponse(
+                            response_id=f"resp-{self._random.randint(10000,99999)}-{day}",
+                            request_id=request.request_id,
+                            seller_id=seller_id,
+                            offered_cpm=cpm,
+                            available_impressions=impressions,
+                            deal_type=DealType.PA,
+                            scenario="B",
+                        )
+                        
+                        deal = await self.create_deal(request, response)
                         if deal:
                             deals_created.append(deal)
                             day_metrics["deals_made"] += 1
