@@ -1,142 +1,117 @@
 -- ledger.sql
--- Sui/Walrus proxy ledger for Scenario C
--- Simulates immutable blockchain records with gas cost estimation
+-- Sui proxy ledger schema for Scenario C (Alkimi ledger-backed)
+-- Simulates immutable blockchain records with Walrus blob storage
 
--- Ledger entries (simulates Sui objects + Walrus blobs)
+-- Ledger entries (simulates Sui objects)
 CREATE TABLE ledger_entries (
-    id VARCHAR(50) PRIMARY KEY,  -- Simulates Sui Object ID
-    blob_id VARCHAR(100) NOT NULL,  -- Simulates Walrus blob reference
-
-    -- Transaction data
-    transaction_type VARCHAR(50) NOT NULL,  -- "bid_request", "bid_response", "deal", "delivery"
+    id VARCHAR(50) PRIMARY KEY,
+    blob_id VARCHAR(100) NOT NULL,
+    transaction_type VARCHAR(50) NOT NULL,
     payload JSONB NOT NULL,
+    created_by VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    hash VARCHAR(64) NOT NULL,
+    previous_hash VARCHAR(64),
+    estimated_sui_gas DECIMAL(18, 8) NOT NULL,
+    estimated_walrus_cost DECIMAL(18, 8) NOT NULL,
+    payload_bytes INT NOT NULL
+);
+
+-- Gas estimation log (for cost comparison)
+CREATE TABLE gas_estimates (
+    id SERIAL PRIMARY KEY,
+    ledger_entry_id VARCHAR(50) REFERENCES ledger_entries(id),
     payload_bytes INT NOT NULL,
-
-    -- Provenance
-    created_by VARCHAR(50) NOT NULL,  -- Agent ID
-
-    -- Immutability simulation (hash chain)
-    content_hash VARCHAR(64) NOT NULL,  -- SHA256 of payload
-    previous_hash VARCHAR(64),  -- Link to previous entry (chain)
-
-    -- Gas estimation
-    estimated_sui_gas DECIMAL(20, 10) NOT NULL,  -- In SUI
-    estimated_walrus_cost DECIMAL(20, 10) NOT NULL,  -- In SUI
-    total_cost_sui DECIMAL(20, 10) NOT NULL,
-    total_cost_usd DECIMAL(15, 6) NOT NULL,  -- At current SUI price
-
-    -- Metadata
-    sui_price_usd DECIMAL(10, 4) DEFAULT 1.50,  -- SUI/USD rate used
-
+    sui_gas_estimate DECIMAL(18, 8) NOT NULL,
+    walrus_cost_estimate DECIMAL(18, 8) NOT NULL,
+    total_sui DECIMAL(18, 8) NOT NULL,
+    total_usd DECIMAL(15, 6) NOT NULL,
+    sui_price_usd DECIMAL(10, 2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Gas cost aggregates (for reporting)
-CREATE TABLE gas_cost_summary (
-    id SERIAL PRIMARY KEY,
-    date DATE NOT NULL,
-
-    -- Counts
-    total_transactions INT NOT NULL,
-    bid_requests INT DEFAULT 0,
-    bid_responses INT DEFAULT 0,
-    deals INT DEFAULT 0,
-    deliveries INT DEFAULT 0,
-
-    -- Costs
-    total_sui_gas DECIMAL(20, 10) NOT NULL,
-    total_walrus_cost DECIMAL(20, 10) NOT NULL,
-    total_sui DECIMAL(20, 10) NOT NULL,
-    total_usd DECIMAL(15, 6) NOT NULL,
-
-    -- Averages
-    avg_cost_per_tx_sui DECIMAL(20, 10),
-    avg_cost_per_tx_usd DECIMAL(15, 6),
-
-    -- Comparison metrics
-    impressions_recorded BIGINT,
-    cost_per_1000_impressions_usd DECIMAL(15, 6),
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    UNIQUE(date)
+-- Cumulative gas costs per campaign (for comparison with exchange fees)
+CREATE TABLE campaign_blockchain_costs (
+    campaign_id VARCHAR(50) NOT NULL REFERENCES campaigns(id),
+    total_transactions INT DEFAULT 0,
+    total_sui_gas DECIMAL(18, 8) DEFAULT 0,
+    total_walrus_cost DECIMAL(18, 8) DEFAULT 0,
+    total_cost_usd DECIMAL(15, 6) DEFAULT 0,
+    equivalent_exchange_fees DECIMAL(15, 2) DEFAULT 0,
+    savings_vs_exchange DECIMAL(15, 2) DEFAULT 0,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (campaign_id)
 );
 
--- Verification log (for dispute resolution)
-CREATE TABLE ledger_verification (
+-- State recovery log (when agents recover from ledger)
+CREATE TABLE ledger_recovery_events (
     id SERIAL PRIMARY KEY,
-    entry_id VARCHAR(50) REFERENCES ledger_entries(id),
-
-    verification_type VARCHAR(50) NOT NULL,  -- "hash_check", "chain_integrity", "payload_match"
-    verified BOOLEAN NOT NULL,
-    discrepancy TEXT,
-
-    verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    agent_id VARCHAR(50) NOT NULL,
+    recovery_type VARCHAR(50) NOT NULL,
+    entries_recovered INT NOT NULL,
+    recovery_time_ms INT NOT NULL,
+    state_completeness DECIMAL(5, 4) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- View: Cost comparison (blockchain vs exchange fees)
-CREATE VIEW cost_comparison AS
-SELECT
-    l.date,
-    l.total_usd as blockchain_cost,
-    COALESCE(t.exchange_fees, 0) as exchange_fees,
-    COALESCE(t.total_spend, 0) as total_spend,
-    CASE
-        WHEN COALESCE(t.total_spend, 0) > 0
-        THEN ROUND((l.total_usd / t.total_spend) * 100, 4)
-        ELSE 0
-    END as blockchain_pct_of_spend,
-    CASE
-        WHEN COALESCE(t.total_spend, 0) > 0
-        THEN ROUND((COALESCE(t.exchange_fees, 0) / t.total_spend) * 100, 2)
-        ELSE 0
-    END as exchange_pct_of_spend
-FROM gas_cost_summary l
-LEFT JOIN (
-    SELECT
-        DATE(created_at) as date,
-        SUM(exchange_fee) as exchange_fees,
-        SUM(buyer_spend) as total_spend
-    FROM transactions
-    WHERE scenario = 'A'
-    GROUP BY DATE(created_at)
-) t ON l.date = t.date;
-
--- View: Ledger chain integrity
-CREATE VIEW chain_integrity AS
-SELECT
-    e1.id,
-    e1.content_hash,
-    e1.previous_hash,
-    e2.content_hash as expected_previous,
-    CASE
-        WHEN e1.previous_hash IS NULL THEN TRUE  -- Genesis entry
-        WHEN e1.previous_hash = e2.content_hash THEN TRUE
-        ELSE FALSE
-    END as chain_valid
-FROM ledger_entries e1
-LEFT JOIN ledger_entries e2 ON e1.previous_hash = e2.content_hash
-ORDER BY e1.created_at;
-
--- Gas estimation constants (based on ADS Explorer data)
--- These can be updated based on actual Sui/Walrus costs
-CREATE TABLE gas_constants (
-    id SERIAL PRIMARY KEY,
-    constant_name VARCHAR(50) UNIQUE NOT NULL,
-    value DECIMAL(20, 10) NOT NULL,
-    description TEXT,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-INSERT INTO gas_constants (constant_name, value, description) VALUES
-    ('SUI_BASE_GAS', 0.001, 'Base transaction cost in SUI'),
-    ('SUI_PER_BYTE', 0.0000001, 'Cost per byte of data in SUI'),
-    ('WALRUS_BASE_COST', 0.0005, 'Minimum blob storage cost in SUI'),
-    ('WALRUS_PER_KB', 0.00001, 'Cost per KB stored in SUI'),
-    ('SUI_PRICE_USD', 1.50, 'Current SUI/USD exchange rate');
 
 -- Indexes
-CREATE INDEX idx_ledger_created_by ON ledger_entries(created_by);
 CREATE INDEX idx_ledger_type ON ledger_entries(transaction_type);
-CREATE INDEX idx_ledger_created_at ON ledger_entries(created_at);
-CREATE INDEX idx_gas_summary_date ON gas_cost_summary(date);
+CREATE INDEX idx_ledger_created_by ON ledger_entries(created_by);
+CREATE INDEX idx_ledger_hash ON ledger_entries(hash);
+CREATE INDEX idx_gas_estimates_entry ON gas_estimates(ledger_entry_id);
+
+-- View for total blockchain costs
+CREATE VIEW blockchain_cost_summary AS
+SELECT
+    SUM(total_transactions) as total_transactions,
+    SUM(total_sui_gas) as total_sui_gas,
+    SUM(total_walrus_cost) as total_walrus_cost,
+    SUM(total_cost_usd) as total_cost_usd,
+    SUM(equivalent_exchange_fees) as equivalent_exchange_fees,
+    SUM(savings_vs_exchange) as total_savings
+FROM campaign_blockchain_costs;
+
+-- View for cost per 1000 impressions
+CREATE VIEW cost_per_1k_impressions AS
+SELECT
+    c.id as campaign_id,
+    c.impressions_delivered,
+    cbc.total_cost_usd,
+    CASE
+        WHEN c.impressions_delivered > 0
+        THEN (cbc.total_cost_usd / c.impressions_delivered) * 1000
+        ELSE 0
+    END as cost_per_1k
+FROM campaigns c
+JOIN campaign_blockchain_costs cbc ON c.id = cbc.campaign_id
+WHERE c.scenario = 'C';
+
+-- Function to verify ledger chain integrity
+CREATE OR REPLACE FUNCTION verify_ledger_integrity()
+RETURNS TABLE (
+    entry_id VARCHAR(50),
+    is_valid BOOLEAN,
+    error_message TEXT
+) AS $$
+DECLARE
+    prev_hash VARCHAR(64) := NULL;
+    entry RECORD;
+BEGIN
+    FOR entry IN
+        SELECT id, hash, previous_hash
+        FROM ledger_entries
+        ORDER BY created_at
+    LOOP
+        IF entry.previous_hash IS DISTINCT FROM prev_hash THEN
+            RETURN QUERY SELECT
+                entry.id,
+                FALSE,
+                'Hash chain broken: expected ' || COALESCE(prev_hash, 'NULL') ||
+                ' but got ' || COALESCE(entry.previous_hash, 'NULL');
+        ELSE
+            RETURN QUERY SELECT entry.id, TRUE, NULL::TEXT;
+        END IF;
+        prev_hash := entry.hash;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;

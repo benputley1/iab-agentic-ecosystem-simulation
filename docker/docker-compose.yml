@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   postgres:
     image: postgres:15
@@ -79,12 +81,12 @@ services:
     networks:
       - rtb_network
 
-networks:
-  rtb_network:
-    driver: bridge
-
 volumes:
   postgres_data:
   redis_data:
   influx_data:
   grafana_data:
+
+networks:
+  rtb_network:
+    driver: bridge

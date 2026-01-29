@@ -1,6 +1,7 @@
-# Gastown
+# Gastown/Claude
 .runtime/
 .claude/
+.beads/
 .logs/
 
 # Python
@@ -24,20 +25,9 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# Virtual environments
-.env
-.venv
-env/
+.venv/
 venv/
 ENV/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
 
 # Testing
 .pytest_cache/
@@ -46,33 +36,31 @@ htmlcov/
 .tox/
 .nox/
 
-# Type checking
-.mypy_cache/
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
 
-# Docker volumes (local dev)
+# Environment
+.env
+.env.local
+
+# Docker volumes (local development)
 postgres_data/
 redis_data/
 influx_data/
 grafana_data/
 
-# Logs and checkpoints
-logs/
+# Simulation outputs
 checkpoints/
-*.log
-
-# Reports (generated)
+logs/
 reports/
 content/
 
-# Vendor repos (cloned separately)
-vendor/
-
-# Secrets
-.env
-.env.local
-*.pem
-*.key
-
-# OS
+# macOS
 .DS_Store
-Thumbs.db
+
+# Vendor dependencies
+vendor/
