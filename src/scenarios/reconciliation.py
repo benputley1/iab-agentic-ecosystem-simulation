@@ -148,28 +148,45 @@ class DiscrepancyConfig:
     
     Based on industry research:
     - ISBA 2020: 15% "unknown delta"
-    - ANA 2023: 5-10% typical discrepancy
+    - ANA 2023: 5-10% typical discrepancy  
     - MRC: 5% acceptable threshold
-    """
-    # Base discrepancy rates by source (probabilities per transaction)
-    timing_rate: float = 0.03           # 3% of impressions
-    ivt_disagreement_rate: float = 0.05  # 5% different bot detection
-    viewability_rate: float = 0.04       # 4% viewability disagreement
-    latency_loss_rate: float = 0.02      # 2% lost to latency
-    data_loss_rate: float = 0.001        # 0.1% per day data loss
-    currency_variance: float = 0.01      # 1% currency timing
-    timezone_boundary: float = 0.02      # 2% at day boundaries
     
-    # Discrepancy magnitude (how much records differ when they disagree)
-    magnitude_range: tuple[float, float] = (0.01, 0.15)  # 1-15% when discrepancy occurs
+    Calibrated to produce:
+    - ~8% average discrepancy
+    - ~33% of campaigns with >10% discrepancy
+    - ~10% unresolvable disputes
+    """
+    # Systematic biases (per-campaign, compounds over time)
+    ivt_bias_range: tuple[float, float] = (0.02, 0.10)     # 2-10% IVT disagreement
+    viewability_bias_range: tuple[float, float] = (0.01, 0.06)  # 1-6% viewability gap
+    timing_bias_range: tuple[float, float] = (-0.03, 0.03)  # ±3% timing variance
+    
+    # Probability of systematic bias applying
+    ivt_apply_rate: float = 0.75         # 75% of campaigns have IVT disagreement
+    viewability_apply_rate: float = 0.65  # 65% have viewability gap
+    
+    # Edge cases (critical for realistic unresolvable rate)
+    major_sync_failure_rate: float = 0.10  # 10% have major sync issues
+    major_sync_bias_add: float = 0.15      # Adds 15% to IVT bias
+    technical_failure_rate: float = 0.08   # 8% have technical data loss
+    technical_failure_magnitude: tuple[float, float] = (0.20, 0.40)  # 20-40% loss
+    attribution_mismatch_rate: float = 0.05  # 5% have attribution window issues
+    attribution_mismatch_bias: tuple[float, float] = (0.05, 0.12)  # 5-12% additional bias
+    
+    # Daily data loss
+    daily_loss_rate: float = 0.03        # 3% daily chance
+    daily_loss_magnitude: tuple[float, float] = (0.01, 0.05)  # 1-5% when occurs
     
     # Resolution thresholds
     auto_accept_threshold: float = 0.03  # <3%: auto-accept buyer's count
     negotiation_threshold: float = 0.10  # 3-10%: negotiate
-    dispute_threshold: float = 0.15      # >15%: formal dispute
+    dispute_threshold: float = 0.15      # 10-15%: formal dispute
+    unresolvable_threshold: float = 0.15  # >15%: often unresolvable
+    extreme_threshold: float = 0.25       # >25%: always unresolvable
     
-    # Unresolvable conditions
-    unresolvable_above: float = 0.25     # >25%: no resolution possible
+    # Resolution probabilities
+    dispute_resolution_prob: float = 0.50   # 50% of 10-15% disputes resolve
+    severe_resolution_prob: float = 0.30    # 30% of 15-25% disputes resolve
 
 
 class DiscrepancyInjector:
