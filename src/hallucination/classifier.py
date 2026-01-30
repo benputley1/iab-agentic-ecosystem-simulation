@@ -1,505 +1,546 @@
 """
-Hallucination Classifier for detecting agent decision errors.
+Hallucination Classifier - Detect and classify hallucinations in agent decisions.
 
-Compares agent decisions against ground truth to detect and classify
-various types of hallucinations that occur due to context window
-limitations, memory loss, or other agent failures.
+This module compares agent decisions against ground truth to detect
+various types of hallucinations caused by context window limitations,
+memory loss, and other AI reliability issues.
 """
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
+from enum import Enum
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-from .types import (
-    AgentDecision,
-    CampaignState,
-    GroundTruthDBProtocol,
-    Hallucination,
-    HallucinationResult,
-    HallucinationType,
-)
+if TYPE_CHECKING:
+    from ..ground_truth.db import GroundTruthDB, CampaignState
 
 
 @dataclass
 class SeverityThresholds:
-    """
-    Configurable thresholds for hallucination detection.
+    """Configurable thresholds for hallucination severity detection."""
     
-    Values represent the minimum deviation required to classify
-    something as a hallucination.
-    """
-    # Budget drift: percentage of remaining budget
-    budget_drift_pct: float = 0.01  # 1%
+    budget_drift_pct: float = 0.01  # 1% threshold for budget drift
+    price_anchor_pct: float = 0.05  # 5% threshold for price errors
+    frequency_cap_violations: int = 1  # Number of violations before flagging
+    inventory_confidence: float = 0.8  # Confidence threshold for inventory
+
+
+class HallucinationType(str, Enum):
+    """Classification of hallucination types in agent decisions."""
     
-    # Price anchor: percentage deviation from actual floor
-    price_anchor_pct: float = 0.05  # 5%
-    
-    # Frequency: number of impressions over the cap
-    frequency_violation_threshold: int = 1  # Any over = violation
-    
-    # Deal floor price: percentage deviation
-    deal_price_deviation_pct: float = 0.01  # 1%
+    BUDGET_DRIFT = "budget_drift"  # Misremembers spent amount
+    FREQUENCY_VIOLATION = "frequency_cap"  # Loses user exposure tracking
+    DEAL_INVENTION = "deal_invention"  # Invents deal terms that don't exist
+    CAMPAIGN_CROSS_CONTAMINATION = "cross_campaign"  # Wrong campaign attribution
+    PHANTOM_INVENTORY = "phantom_inventory"  # References non-existent supply
+    PRICE_ANCHOR_ERROR = "price_anchor"  # Wrong price memory/floor price
 
 
 @dataclass
-class ClassifierStats:
-    """
-    Statistics tracked by the classifier over time.
-    """
-    total_decisions_checked: int = 0
-    total_hallucinations: int = 0
-    hallucinations_by_type: dict[HallucinationType, int] = field(default_factory=dict)
-    severity_sum: float = 0.0
+class Hallucination:
+    """A single detected hallucination instance."""
+    
+    type: HallucinationType
+    expected: Any  # Ground truth value
+    actual: Any  # What the agent claimed/used
+    severity: float  # 0.0-1.0, how bad is this error
+    decision_id: str = ""
+    campaign_id: str = ""
+    timestamp: datetime = field(default_factory=datetime.utcnow)
+    metadata: Dict[str, Any] = field(default_factory=dict)
     
     @property
-    def hallucination_rate(self) -> float:
-        """Rate of decisions with at least one hallucination."""
-        if self.total_decisions_checked == 0:
-            return 0.0
-        return self.total_hallucinations / self.total_decisions_checked
+    def drift_amount(self) -> float:
+        """Calculate the absolute drift amount for numeric values."""
+        if isinstance(self.expected, (int, float)) and isinstance(self.actual, (int, float)):
+            return abs(self.expected - self.actual)
+        return 0.0
     
     @property
-    def average_severity(self) -> float:
-        """Average severity across all hallucinations."""
-        if self.total_hallucinations == 0:
-            return 0.0
-        return self.severity_sum / self.total_hallucinations
+    def drift_percentage(self) -> float:
+        """Calculate the drift as a percentage of expected value."""
+        if isinstance(self.expected, (int, float)) and self.expected != 0:
+            return abs(self.expected - self.actual) / abs(self.expected) * 100
+        return 0.0
+
+
+@dataclass
+class HallucinationResult:
+    """Result of checking a decision for hallucinations."""
     
-    def to_dict(self) -> dict:
-        """Convert to dictionary for serialization."""
-        return {
-            "total_decisions_checked": self.total_decisions_checked,
-            "total_hallucinations": self.total_hallucinations,
-            "hallucination_rate": self.hallucination_rate,
-            "average_severity": self.average_severity,
-            "by_type": {
-                t.value: count 
-                for t, count in self.hallucinations_by_type.items()
-            }
-        }
+    decision_id: str
+    errors: List[Hallucination] = field(default_factory=list)
+    checked_at: datetime = field(default_factory=datetime.utcnow)
+    
+    @property
+    def has_hallucinations(self) -> bool:
+        """Check if any hallucinations were detected."""
+        return len(self.errors) > 0
+    
+    @property
+    def total_severity(self) -> float:
+        """Sum of all hallucination severities."""
+        return sum(h.severity for h in self.errors)
+    
+    @property
+    def max_severity(self) -> float:
+        """Maximum severity among all hallucinations."""
+        return max((h.severity for h in self.errors), default=0.0)
+    
+    @property
+    def hallucination_types(self) -> List[HallucinationType]:
+        """List of hallucination types detected."""
+        return [h.type for h in self.errors]
+
+
+@dataclass
+class AgentDecisionForCheck:
+    """Agent decision data needed for hallucination checking."""
+    
+    decision_id: str
+    timestamp: datetime
+    campaign_id: str
+    agent_id: str
+    
+    # Values claimed by the agent (to compare against ground truth)
+    budget_remaining: Optional[float] = None
+    total_spend: Optional[float] = None
+    impressions_claimed: Optional[int] = None
+    floor_price_used: Optional[float] = None
+    deal_id_referenced: Optional[str] = None
+    deal_terms_claimed: Optional[Dict[str, Any]] = None
+    user_frequency_claimed: Optional[Dict[str, int]] = None  # user_id -> exposure count
+    publisher_id: Optional[str] = None
+    
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 class HallucinationClassifier:
     """
-    Classifies and tracks hallucination types in agent decisions.
+    Classify and track hallucination types in agent decisions.
     
-    Compares agent decisions against a ground truth database to detect
-    various types of hallucinations that can occur during ad bidding.
+    Compares agent decisions against ground truth to detect various
+    types of hallucinations. Tracks statistics over time for reporting.
     
-    Usage:
-        classifier = HallucinationClassifier(ground_truth_db)
-        result = classifier.check_decision(agent_decision)
-        if result.has_hallucinations:
-            for h in result.errors:
-                print(f"{h.type}: expected {h.expected}, got {h.actual}")
+    Thresholds are configurable - by default:
+    - Budget drift: >1% of remaining budget
+    - Price anchor: >5% difference from actual floor
+    - Frequency: any overcounting is flagged
     """
     
     def __init__(
         self,
-        ground_truth: GroundTruthDBProtocol,
-        thresholds: Optional[SeverityThresholds] = None
+        ground_truth: "GroundTruthDB",
+        budget_drift_threshold: float = 0.01,  # 1% tolerance
+        price_anchor_threshold: float = 0.05,  # 5% tolerance
+        frequency_strict: bool = True,  # Any violation is flagged
     ):
         """
-        Initialize the classifier.
+        Initialize the hallucination classifier.
         
         Args:
-            ground_truth: Database providing authoritative state
-            thresholds: Optional custom thresholds for detection
+            ground_truth: GroundTruthDB instance for comparison
+            budget_drift_threshold: Relative threshold for budget errors
+            price_anchor_threshold: Relative threshold for price errors
+            frequency_strict: If True, any frequency violation is flagged
         """
         self.ground_truth = ground_truth
-        self.thresholds = thresholds or SeverityThresholds()
-        self.hallucinations: list[Hallucination] = []
-        self.stats = ClassifierStats()
+        self.budget_drift_threshold = budget_drift_threshold
+        self.price_anchor_threshold = price_anchor_threshold
+        self.frequency_strict = frequency_strict
+        
+        # Track all detected hallucinations
+        self.hallucinations: List[Hallucination] = []
+        self.decisions_checked: int = 0
+        self.decisions_with_errors: int = 0
+        
+        # Track known entities for phantom detection
+        self._known_deals: Dict[str, Dict[str, Any]] = {}
+        self._known_publishers: set = set()
+        self._actual_floor_prices: Dict[str, float] = {}  # request_id -> floor
+        self._user_frequencies: Dict[str, Dict[str, int]] = {}  # campaign_id -> {user_id: count}
     
-    def check_decision(self, decision: AgentDecision) -> HallucinationResult:
+    def register_deal(self, deal_id: str, terms: Dict[str, Any]) -> None:
+        """Register a known deal for phantom detection."""
+        self._known_deals[deal_id] = terms
+    
+    def register_publisher(self, publisher_id: str) -> None:
+        """Register a known publisher for phantom detection."""
+        self._known_publishers.add(publisher_id)
+    
+    def register_floor_price(self, request_id: str, floor_price: float) -> None:
+        """Register the actual floor price for a bid request."""
+        self._actual_floor_prices[request_id] = floor_price
+    
+    def record_user_exposure(self, campaign_id: str, user_id: str) -> None:
+        """Record an actual user exposure for frequency tracking."""
+        if campaign_id not in self._user_frequencies:
+            self._user_frequencies[campaign_id] = {}
+        freq = self._user_frequencies[campaign_id]
+        freq[user_id] = freq.get(user_id, 0) + 1
+    
+    def check_decision(
+        self,
+        decision: AgentDecisionForCheck,
+        actual_floor_price: Optional[float] = None,
+    ) -> HallucinationResult:
         """
-        Compare a decision against ground truth and detect hallucinations.
+        Compare a decision against ground truth to detect hallucinations.
         
         Args:
-            decision: The agent decision to validate
+            decision: The agent decision to check
+            actual_floor_price: Optional actual floor price if not registered
             
         Returns:
-            HallucinationResult with list of detected hallucinations
+            HallucinationResult with any detected errors
         """
-        errors: list[Hallucination] = []
+        errors: List[Hallucination] = []
+        self.decisions_checked += 1
         
-        # Get ground truth state for this decision's campaign
+        # Get ground truth state
         truth = self.ground_truth.get_campaign_state(
             decision.campaign_id,
             decision.timestamp
         )
         
-        # Run all checks
-        if budget_error := self._check_budget_drift(decision, truth):
-            errors.append(budget_error)
+        # Check for budget drift
+        if decision.budget_remaining is not None or decision.total_spend is not None:
+            budget_error = self._check_budget_drift(decision, truth)
+            if budget_error:
+                errors.append(budget_error)
         
-        if freq_error := self._check_frequency_violation(decision, truth):
-            errors.append(freq_error)
+        # Check for price anchor errors
+        if decision.floor_price_used is not None:
+            price_error = self._check_price_anchor(decision, actual_floor_price)
+            if price_error:
+                errors.append(price_error)
         
-        if deal_error := self._check_deal_invention(decision):
-            errors.append(deal_error)
+        # Check for deal invention
+        if decision.deal_id_referenced is not None:
+            deal_error = self._check_deal_invention(decision)
+            if deal_error:
+                errors.append(deal_error)
         
-        if cross_error := self._check_cross_contamination(decision, truth):
-            errors.append(cross_error)
+        # Check for phantom inventory
+        if decision.publisher_id is not None:
+            phantom_error = self._check_phantom_inventory(decision)
+            if phantom_error:
+                errors.append(phantom_error)
         
-        if phantom_error := self._check_phantom_inventory(decision):
-            errors.append(phantom_error)
+        # Check for frequency violations
+        if decision.user_frequency_claimed is not None:
+            freq_errors = self._check_frequency_violation(decision)
+            errors.extend(freq_errors)
         
-        if price_error := self._check_price_anchor_error(decision, truth):
-            errors.append(price_error)
-        
-        # Update stats
-        self._update_stats(errors)
-        
-        # Store hallucinations for later analysis
-        self.hallucinations.extend(errors)
+        # Track results
+        if errors:
+            self.decisions_with_errors += 1
+            self.hallucinations.extend(errors)
         
         return HallucinationResult(
-            decision_id=decision.id,
-            timestamp=decision.timestamp,
-            errors=errors
+            decision_id=decision.decision_id,
+            errors=errors,
         )
     
     def _check_budget_drift(
         self,
-        decision: AgentDecision,
-        truth: CampaignState
+        decision: AgentDecisionForCheck,
+        truth: "CampaignState",
     ) -> Optional[Hallucination]:
-        """Check if agent misremembers remaining budget."""
-        if decision.budget_remaining is None:
+        """Check for budget drift hallucination."""
+        # Get the agent's claimed values
+        claimed_spend = decision.total_spend
+        if claimed_spend is None and decision.budget_remaining is not None:
+            # Infer from budget remaining if we know initial budget
+            initial_budget = decision.metadata.get("initial_budget")
+            if initial_budget:
+                claimed_spend = initial_budget - decision.budget_remaining
+        
+        if claimed_spend is None:
             return None
         
-        actual_remaining = truth.budget_remaining
-        agent_remaining = decision.budget_remaining
+        # Compare against ground truth
+        actual_spend = truth.total_spend
         
-        if actual_remaining == 0:
-            # Avoid division by zero - any non-zero belief is 100% drift
-            if agent_remaining != 0:
-                return Hallucination(
-                    type=HallucinationType.BUDGET_DRIFT,
-                    expected=actual_remaining,
-                    actual=agent_remaining,
-                    severity=1.0,
-                    description=f"Budget exhausted but agent believes {agent_remaining:.2f} remains",
-                    field_name="budget_remaining"
-                )
-            return None
+        # Check if drift exceeds threshold
+        if actual_spend == 0:
+            if claimed_spend > 0:
+                drift = 1.0  # 100% error
+            else:
+                return None  # Both zero, no error
+        else:
+            drift = abs(claimed_spend - actual_spend) / actual_spend
         
-        drift = abs(agent_remaining - actual_remaining)
-        drift_pct = drift / actual_remaining
-        
-        if drift_pct > self.thresholds.budget_drift_pct:
-            # Severity scales with drift percentage, capped at 1.0
-            severity = min(drift_pct, 1.0)
+        if drift > self.budget_drift_threshold:
+            # Calculate severity (capped at 1.0)
+            severity = min(1.0, drift)
             
             return Hallucination(
                 type=HallucinationType.BUDGET_DRIFT,
-                expected=actual_remaining,
-                actual=agent_remaining,
+                expected=actual_spend,
+                actual=claimed_spend,
                 severity=severity,
-                description=f"Budget drift of {drift_pct:.1%} ({drift:.2f} difference)",
-                field_name="budget_remaining"
+                decision_id=decision.decision_id,
+                campaign_id=decision.campaign_id,
+                timestamp=decision.timestamp,
+                metadata={
+                    "drift_percentage": drift * 100,
+                    "threshold": self.budget_drift_threshold * 100,
+                }
             )
         
         return None
     
-    def _check_frequency_violation(
+    def _check_price_anchor(
         self,
-        decision: AgentDecision,
-        truth: CampaignState
+        decision: AgentDecisionForCheck,
+        actual_floor_price: Optional[float],
     ) -> Optional[Hallucination]:
-        """Check if agent loses track of user exposure."""
-        if decision.user_id is None or decision.user_exposure_count is None:
+        """Check for price anchor errors."""
+        # Get actual floor price
+        floor = actual_floor_price
+        if floor is None:
+            # Try to find from registered prices
+            request_id = decision.metadata.get("request_id")
+            if request_id and request_id in self._actual_floor_prices:
+                floor = self._actual_floor_prices[request_id]
+        
+        if floor is None or floor == 0:
             return None
         
-        # Get actual exposure count from ground truth
-        actual_count = self.ground_truth.get_user_frequency(
-            decision.campaign_id,
-            decision.user_id,
-            decision.timestamp
-        )
+        claimed_floor = decision.floor_price_used
+        drift = abs(claimed_floor - floor) / floor
         
-        agent_count = decision.user_exposure_count
-        
-        # Check if agent's count differs significantly
-        count_diff = abs(agent_count - actual_count)
-        
-        if count_diff >= self.thresholds.frequency_violation_threshold:
-            # Also check if this resulted in exceeding frequency cap
-            frequency_cap = decision.frequency_cap or truth.frequency_caps.get(
-                decision.user_id, float('inf')
-            )
-            
-            # Severity based on how wrong the count is and if cap was violated
-            if actual_count >= frequency_cap and agent_count < frequency_cap:
-                # Agent thought they could bid but cap was already reached
-                severity = min(0.5 + (count_diff / 10), 1.0)
-                description = (
-                    f"Frequency cap violation: actual count {actual_count} "
-                    f"(cap: {frequency_cap}), agent believed {agent_count}"
-                )
-            else:
-                severity = min(count_diff / 10, 0.5)
-                description = (
-                    f"User exposure tracking error: actual {actual_count}, "
-                    f"agent believed {agent_count}"
-                )
+        if drift > self.price_anchor_threshold:
+            severity = min(1.0, drift)
             
             return Hallucination(
-                type=HallucinationType.FREQUENCY_VIOLATION,
-                expected=actual_count,
-                actual=agent_count,
+                type=HallucinationType.PRICE_ANCHOR_ERROR,
+                expected=floor,
+                actual=claimed_floor,
                 severity=severity,
-                description=description,
-                field_name="user_exposure_count"
+                decision_id=decision.decision_id,
+                campaign_id=decision.campaign_id,
+                timestamp=decision.timestamp,
+                metadata={
+                    "drift_percentage": drift * 100,
+                    "threshold": self.price_anchor_threshold * 100,
+                }
             )
         
         return None
     
     def _check_deal_invention(
         self,
-        decision: AgentDecision
+        decision: AgentDecisionForCheck,
     ) -> Optional[Hallucination]:
-        """Check if agent invents or misremembers deal terms."""
-        if decision.deal_id is None:
-            return None
+        """Check for deal invention hallucination."""
+        deal_id = decision.deal_id_referenced
         
-        # Check if deal exists at all
-        actual_deal = self.ground_truth.get_deal(decision.deal_id)
-        
-        if actual_deal is None:
-            # Deal doesn't exist - complete invention
+        # Check if deal exists
+        if deal_id not in self._known_deals:
             return Hallucination(
                 type=HallucinationType.DEAL_INVENTION,
-                expected=None,
-                actual={"deal_id": decision.deal_id, "terms": decision.deal_terms},
-                severity=1.0,
-                description=f"Deal {decision.deal_id} does not exist",
-                field_name="deal_id"
+                expected=None,  # Deal doesn't exist
+                actual=deal_id,
+                severity=0.8,  # High severity - invented deal
+                decision_id=decision.decision_id,
+                campaign_id=decision.campaign_id,
+                timestamp=decision.timestamp,
+                metadata={
+                    "claimed_deal_id": deal_id,
+                    "error": "deal_not_found",
+                }
             )
         
-        # Deal exists - check if terms match
-        if decision.deal_terms is not None:
-            mismatched_terms = []
-            
-            for key, agent_value in decision.deal_terms.items():
-                if key in actual_deal:
-                    actual_value = actual_deal[key]
-                    if agent_value != actual_value:
-                        mismatched_terms.append({
-                            "field": key,
-                            "expected": actual_value,
-                            "actual": agent_value
-                        })
-            
-            if mismatched_terms:
-                # Severity based on number and importance of mismatches
-                severity = min(len(mismatched_terms) * 0.2, 0.8)
-                
-                return Hallucination(
-                    type=HallucinationType.DEAL_INVENTION,
-                    expected=actual_deal,
-                    actual=decision.deal_terms,
-                    severity=severity,
-                    description=f"Deal terms mismatch: {mismatched_terms}",
-                    field_name="deal_terms"
-                )
-        
-        # Check floor price if specified
-        if decision.deal_floor_price is not None and "floor_price" in actual_deal:
-            actual_floor = actual_deal["floor_price"]
-            price_diff = abs(decision.deal_floor_price - actual_floor)
-            
-            if actual_floor > 0:
-                deviation_pct = price_diff / actual_floor
-                if deviation_pct > self.thresholds.deal_price_deviation_pct:
+        # Check if deal terms match (if provided)
+        if decision.deal_terms_claimed:
+            actual_terms = self._known_deals[deal_id]
+            for key, claimed_value in decision.deal_terms_claimed.items():
+                actual_value = actual_terms.get(key)
+                if actual_value is not None and actual_value != claimed_value:
                     return Hallucination(
                         type=HallucinationType.DEAL_INVENTION,
-                        expected=actual_floor,
-                        actual=decision.deal_floor_price,
-                        severity=min(deviation_pct, 1.0),
-                        description=f"Deal floor price wrong: {deviation_pct:.1%} deviation",
-                        field_name="deal_floor_price"
+                        expected=actual_value,
+                        actual=claimed_value,
+                        severity=0.5,  # Medium severity - wrong terms
+                        decision_id=decision.decision_id,
+                        campaign_id=decision.campaign_id,
+                        timestamp=decision.timestamp,
+                        metadata={
+                            "deal_id": deal_id,
+                            "field": key,
+                            "error": "wrong_deal_terms",
+                        }
                     )
-        
-        return None
-    
-    def _check_cross_contamination(
-        self,
-        decision: AgentDecision,
-        truth: CampaignState
-    ) -> Optional[Hallucination]:
-        """Check if agent attributes data to wrong campaign."""
-        # This check requires the decision to reference the campaign
-        # If the campaign_id in decision doesn't match what we're checking,
-        # that's a cross-contamination issue
-        
-        if decision.campaign_id != truth.campaign_id:
-            return Hallucination(
-                type=HallucinationType.CAMPAIGN_CROSS_CONTAMINATION,
-                expected=truth.campaign_id,
-                actual=decision.campaign_id,
-                severity=1.0,
-                description=f"Decision attributed to wrong campaign",
-                field_name="campaign_id"
-            )
-        
-        # Additional check: if budget figures match a DIFFERENT campaign
-        # This would require access to other campaigns, which is a more
-        # complex check. For now, we rely on the basic campaign_id check.
         
         return None
     
     def _check_phantom_inventory(
         self,
-        decision: AgentDecision
+        decision: AgentDecisionForCheck,
     ) -> Optional[Hallucination]:
-        """Check if agent references non-existent inventory."""
-        if decision.inventory_id is None:
+        """Check for phantom inventory hallucination."""
+        publisher_id = decision.publisher_id
+        
+        # Only check if we have known publishers registered
+        if not self._known_publishers:
             return None
         
-        exists = self.ground_truth.inventory_exists(
-            decision.inventory_id,
-            decision.timestamp
-        )
-        
-        if not exists:
+        if publisher_id not in self._known_publishers:
             return Hallucination(
                 type=HallucinationType.PHANTOM_INVENTORY,
-                expected="inventory_exists=True",
-                actual="inventory_exists=False",
-                severity=0.8,
-                description=f"Inventory {decision.inventory_id} does not exist",
-                field_name="inventory_id"
-            )
-        
-        return None
-    
-    def _check_price_anchor_error(
-        self,
-        decision: AgentDecision,
-        truth: CampaignState
-    ) -> Optional[Hallucination]:
-        """Check if agent misremembers floor prices."""
-        if decision.inventory_id is None or decision.expected_floor_price is None:
-            return None
-        
-        # Get actual floor price
-        actual_floor = self.ground_truth.get_floor_price(
-            decision.inventory_id,
-            decision.timestamp
-        )
-        
-        if actual_floor is None:
-            # No floor price data available - can't check
-            return None
-        
-        agent_floor = decision.expected_floor_price
-        
-        if actual_floor == 0:
-            # Handle zero floor case
-            if agent_floor != 0:
-                return Hallucination(
-                    type=HallucinationType.PRICE_ANCHOR_ERROR,
-                    expected=actual_floor,
-                    actual=agent_floor,
-                    severity=0.5,
-                    description=f"Floor price is 0, agent expected {agent_floor:.4f}",
-                    field_name="expected_floor_price"
-                )
-            return None
-        
-        deviation = abs(agent_floor - actual_floor)
-        deviation_pct = deviation / actual_floor
-        
-        if deviation_pct > self.thresholds.price_anchor_pct:
-            severity = min(deviation_pct, 1.0)
-            
-            return Hallucination(
-                type=HallucinationType.PRICE_ANCHOR_ERROR,
-                expected=actual_floor,
-                actual=agent_floor,
-                severity=severity,
-                description=(
-                    f"Floor price error: actual {actual_floor:.4f}, "
-                    f"agent expected {agent_floor:.4f} ({deviation_pct:.1%} off)"
-                ),
-                field_name="expected_floor_price"
-            )
-        
-        return None
-    
-    def _update_stats(self, errors: list[Hallucination]) -> None:
-        """Update classifier statistics."""
-        self.stats.total_decisions_checked += 1
-        
-        if errors:
-            self.stats.total_hallucinations += len(errors)
-            
-            for error in errors:
-                self.stats.severity_sum += error.severity
-                
-                if error.type not in self.stats.hallucinations_by_type:
-                    self.stats.hallucinations_by_type[error.type] = 0
-                self.stats.hallucinations_by_type[error.type] += 1
-    
-    def get_stats(self) -> ClassifierStats:
-        """Get current classifier statistics."""
-        return self.stats
-    
-    def reset_stats(self) -> None:
-        """Reset statistics (keeps hallucination history)."""
-        self.stats = ClassifierStats()
-    
-    def get_hallucinations_by_type(
-        self,
-        hallucination_type: HallucinationType
-    ) -> list[Hallucination]:
-        """Get all hallucinations of a specific type."""
-        return [h for h in self.hallucinations if h.type == hallucination_type]
-    
-    def get_hallucination_summary(self) -> dict:
-        """
-        Get a summary of all detected hallucinations.
-        
-        Returns:
-            Dictionary with counts and statistics by type
-        """
-        summary = {
-            "total": len(self.hallucinations),
-            "by_type": {},
-            "severity_distribution": {
-                "low": 0,    # 0.0 - 0.33
-                "medium": 0,  # 0.34 - 0.66
-                "high": 0     # 0.67 - 1.0
-            }
-        }
-        
-        for h in self.hallucinations:
-            # Count by type
-            type_name = h.type.value
-            if type_name not in summary["by_type"]:
-                summary["by_type"][type_name] = {
-                    "count": 0,
-                    "avg_severity": 0.0,
-                    "total_severity": 0.0
+                expected=None,
+                actual=publisher_id,
+                severity=0.6,  # Medium-high severity
+                decision_id=decision.decision_id,
+                campaign_id=decision.campaign_id,
+                timestamp=decision.timestamp,
+                metadata={
+                    "claimed_publisher": publisher_id,
+                    "error": "publisher_not_found",
                 }
-            summary["by_type"][type_name]["count"] += 1
-            summary["by_type"][type_name]["total_severity"] += h.severity
+            )
+        
+        return None
+    
+    def _check_frequency_violation(
+        self,
+        decision: AgentDecisionForCheck,
+    ) -> List[Hallucination]:
+        """Check for frequency cap violations."""
+        errors = []
+        claimed_frequencies = decision.user_frequency_claimed or {}
+        
+        # Get actual frequencies for this campaign
+        actual_frequencies = self._user_frequencies.get(decision.campaign_id, {})
+        
+        for user_id, claimed_count in claimed_frequencies.items():
+            actual_count = actual_frequencies.get(user_id, 0)
             
-            # Severity distribution
-            if h.severity <= 0.33:
-                summary["severity_distribution"]["low"] += 1
-            elif h.severity <= 0.66:
-                summary["severity_distribution"]["medium"] += 1
-            else:
-                summary["severity_distribution"]["high"] += 1
+            # Agent claims fewer exposures than actually occurred
+            # This could lead to over-serving the user
+            if claimed_count < actual_count:
+                undercount = actual_count - claimed_count
+                severity = min(1.0, undercount / max(actual_count, 1))
+                
+                errors.append(Hallucination(
+                    type=HallucinationType.FREQUENCY_VIOLATION,
+                    expected=actual_count,
+                    actual=claimed_count,
+                    severity=severity,
+                    decision_id=decision.decision_id,
+                    campaign_id=decision.campaign_id,
+                    timestamp=decision.timestamp,
+                    metadata={
+                        "user_id": user_id,
+                        "undercount": undercount,
+                        "error": "frequency_undercount",
+                    }
+                ))
         
-        # Calculate averages
-        for type_data in summary["by_type"].values():
-            if type_data["count"] > 0:
-                type_data["avg_severity"] = (
-                    type_data["total_severity"] / type_data["count"]
-                )
+        return errors
+    
+    def check_campaign_contamination(
+        self,
+        decision_id: str,
+        claimed_campaign_id: str,
+        actual_campaign_id: str,
+        timestamp: Optional[datetime] = None,
+    ) -> Optional[Hallucination]:
+        """
+        Check for campaign cross-contamination.
         
-        return summary
+        This occurs when an agent attributes data to the wrong campaign.
+        
+        Args:
+            decision_id: The decision being checked
+            claimed_campaign_id: Campaign ID the agent claims
+            actual_campaign_id: Actual campaign ID
+            timestamp: When this occurred
+            
+        Returns:
+            Hallucination if contamination detected, None otherwise
+        """
+        if claimed_campaign_id != actual_campaign_id:
+            return Hallucination(
+                type=HallucinationType.CAMPAIGN_CROSS_CONTAMINATION,
+                expected=actual_campaign_id,
+                actual=claimed_campaign_id,
+                severity=0.7,  # High severity - wrong campaign
+                decision_id=decision_id,
+                campaign_id=actual_campaign_id,
+                timestamp=timestamp or datetime.utcnow(),
+                metadata={
+                    "claimed_campaign": claimed_campaign_id,
+                    "actual_campaign": actual_campaign_id,
+                }
+            )
+        return None
+    
+    def get_hallucination_rate(self) -> float:
+        """Calculate overall hallucination rate."""
+        if self.decisions_checked == 0:
+            return 0.0
+        return self.decisions_with_errors / self.decisions_checked
+    
+    def get_type_distribution(self) -> Dict[HallucinationType, int]:
+        """Get distribution of hallucination types."""
+        distribution = {t: 0 for t in HallucinationType}
+        for h in self.hallucinations:
+            distribution[h.type] += 1
+        return distribution
+    
+    def get_severity_stats(self) -> Dict[str, float]:
+        """Get severity statistics."""
+        if not self.hallucinations:
+            return {
+                "mean": 0.0,
+                "max": 0.0,
+                "min": 0.0,
+                "total": 0.0,
+            }
+        
+        severities = [h.severity for h in self.hallucinations]
+        return {
+            "mean": sum(severities) / len(severities),
+            "max": max(severities),
+            "min": min(severities),
+            "total": sum(severities),
+        }
+    
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get comprehensive metrics for reporting."""
+        type_dist = self.get_type_distribution()
+        severity_stats = self.get_severity_stats()
+        
+        return {
+            "decisions_checked": self.decisions_checked,
+            "decisions_with_errors": self.decisions_with_errors,
+            "hallucination_rate": self.get_hallucination_rate(),
+            "total_hallucinations": len(self.hallucinations),
+            "type_distribution": {t.value: c for t, c in type_dist.items()},
+            "severity_stats": severity_stats,
+            "by_type_severity": self._get_severity_by_type(),
+        }
+    
+    def _get_severity_by_type(self) -> Dict[str, float]:
+        """Get average severity by hallucination type."""
+        by_type: Dict[HallucinationType, List[float]] = {t: [] for t in HallucinationType}
+        for h in self.hallucinations:
+            by_type[h.type].append(h.severity)
+        
+        return {
+            t.value: (sum(severities) / len(severities) if severities else 0.0)
+            for t, severities in by_type.items()
+        }
+    
+    def reset(self) -> None:
+        """Reset all tracking state."""
+        self.hallucinations.clear()
+        self.decisions_checked = 0
+        self.decisions_with_errors = 0
+        self._known_deals.clear()
+        self._known_publishers.clear()
+        self._actual_floor_prices.clear()
+        self._user_frequencies.clear()

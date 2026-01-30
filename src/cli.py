@@ -373,7 +373,7 @@ def content(
     """Generate article series from simulation results."""
     console.print("[bold green]Generating Content Series[/bold green]")
 
-    from .logging.content import generate_sample_simulation, ArticleGenerator, FindingExtractor
+    from .sim_logging.content import generate_sample_simulation, ArticleGenerator, FindingExtractor
 
     # Generate or load event data
     if use_sample:
@@ -437,7 +437,7 @@ def findings(
     """Display top findings from simulation."""
     console.print("[bold]Extracting Top Findings[/bold]")
 
-    from .logging.content import generate_sample_simulation, FindingExtractor
+    from .sim_logging.content import generate_sample_simulation, FindingExtractor
 
     # Generate sample data
     console.print("  Generating sample simulation data...")

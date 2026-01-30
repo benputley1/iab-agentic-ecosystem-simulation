@@ -1,0 +1,50 @@
+{
+  "start_time": "2026-01-30T11:23:47.683863",
+  "config": {
+    "days": 5,
+    "buyers": 3,
+    "sellers": 3,
+    "mock_llm": true,
+    "use_a2a": false
+  },
+  "days_completed": 5,
+  "total_deals": 30,
+  "total_impressions": 3000000,
+  "total_spend": 30750.0,
+  "total_llm_calls": 0,
+  "total_llm_cost": 0.0,
+  "deals_by_day": [
+    {
+      "day": 1,
+      "deals": 6,
+      "impressions": 600000,
+      "spend": 6150.0
+    },
+    {
+      "day": 2,
+      "deals": 6,
+      "impressions": 600000,
+      "spend": 6150.0
+    },
+    {
+      "day": 3,
+      "deals": 6,
+      "impressions": 600000,
+      "spend": 6150.0
+    },
+    {
+      "day": 4,
+      "deals": 6,
+      "impressions": 600000,
+      "spend": 6150.0
+    },
+    {
+      "day": 5,
+      "deals": 6,
+      "impressions": 600000,
+      "spend": 6150.0
+    }
+  ],
+  "errors": [],
+  "end_time": "2026-01-30T11:23:47.797453"
+}

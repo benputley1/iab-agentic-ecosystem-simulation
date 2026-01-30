@@ -1,0 +1,94 @@
+{
+  "days": [
+    {
+      "day": 1,
+      "decisions": 10,
+      "hallucinations": 0,
+      "bids": [
+        0,
+        0.26,
+        1.0,
+        10.0,
+        10.0,
+        0,
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "context_tokens": 684,
+      "overflows": 0
+    },
+    {
+      "day": 2,
+      "decisions": 7,
+      "hallucinations": 3,
+      "bids": [
+        10.0,
+        10.0,
+        8500.0,
+        8500.0,
+        3.27,
+        8500.0,
+        3.27
+      ],
+      "context_tokens": 1164,
+      "overflows": 0
+    },
+    {
+      "day": 3,
+      "decisions": 10,
+      "hallucinations": 4,
+      "bids": [
+        3.88,
+        0,
+        3.88,
+        0,
+        7000.0,
+        0,
+        7000.0,
+        7000.0,
+        7.0,
+        7000.0
+      ],
+      "context_tokens": 1848,
+      "overflows": 0
+    },
+    {
+      "day": 4,
+      "decisions": 6,
+      "hallucinations": 2,
+      "bids": [
+        4.42,
+        0,
+        4.47,
+        5500.0,
+        5500.0,
+        4.47
+      ],
+      "context_tokens": 2258,
+      "overflows": 0
+    },
+    {
+      "day": 5,
+      "decisions": 10,
+      "hallucinations": 2,
+      "bids": [
+        4.68,
+        4.68,
+        0,
+        3.79,
+        4000.0,
+        4.0,
+        4000.0,
+        4.01,
+        3.79,
+        0
+      ],
+      "context_tokens": 2929,
+      "overflows": 0
+    }
+  ],
+  "total_llm_calls": 50,
+  "total_hallucinations": 11
+}

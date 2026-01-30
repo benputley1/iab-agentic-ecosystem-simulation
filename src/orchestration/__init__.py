@@ -52,6 +52,14 @@ from .run_simulation import (
     ScenarioResult,
 )
 
+from .v2_orchestrator import (
+    V2Orchestrator,
+    V2Config,
+    V2SimulationResult,
+    DailyMetrics,
+    SimulatedAgent,
+)
+
 
 __all__ = [
     # Convoy types
@@ -85,4 +93,10 @@ __all__ = [
     "SimulationState",
     "SimulationResult",
     "ScenarioResult",
+    # V2 Orchestrator
+    "V2Orchestrator",
+    "V2Config",
+    "V2SimulationResult",
+    "DailyMetrics",
+    "SimulatedAgent",
 ]

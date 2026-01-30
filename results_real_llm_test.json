@@ -1,0 +1,154 @@
+{
+  "start_time": "2026-01-30T12:15:42.549277",
+  "days": 3,
+  "real_llm": true,
+  "test_mode": true,
+  "num_buyers": 3,
+  "num_sellers": 3,
+  "total_opportunities": 8,
+  "scenarios": {
+    "A": {
+      "scenario": "A",
+      "name": "Rent-Seeking Exchange (15%)",
+      "fee_pct": 15.0,
+      "deals": 8,
+      "deal_opportunities": 8,
+      "total_spend": 32007.58650249114,
+      "total_fees": 4801.13797537367,
+      "total_impressions": 2187162,
+      "context_rot_events": 0,
+      "hallucinations": 0,
+      "hallucination_cost": 0.0,
+      "failed_deals": 0,
+      "daily_results": [
+        {
+          "day": 1,
+          "deals": 3,
+          "spend": 7518.121258807406,
+          "fees": 1127.7181888211107,
+          "impressions": 639977
+        },
+        {
+          "day": 2,
+          "deals": 2,
+          "spend": 8519.173253935056,
+          "fees": 1277.8759880902583,
+          "impressions": 722720
+        },
+        {
+          "day": 3,
+          "deals": 3,
+          "spend": 15970.291989748677,
+          "fees": 2395.5437984623013,
+          "impressions": 824465
+        }
+      ],
+      "api_cost_usd": 0.0,
+      "avg_cpm": 14.634300752523654
+    },
+    "B": {
+      "scenario": "B",
+      "name": "Direct A2A (Real LLM, context rot)",
+      "fee_pct": 0.0,
+      "deals": 8,
+      "deal_opportunities": 8,
+      "total_spend": 37273.02325,
+      "total_fees": 0.0,
+      "total_impressions": 2187162,
+      "context_rot_events": 2,
+      "hallucinations": 0,
+      "hallucination_cost": 0.0,
+      "failed_deals": 0,
+      "daily_results": [
+        {
+          "day": 1,
+          "deals": 3,
+          "spend": 8990.08275,
+          "impressions": 639977,
+          "context_limit": 50,
+          "context_integrity": 1.0,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 2,
+          "deals": 2,
+          "spend": 12855.677000000001,
+          "impressions": 722720,
+          "context_limit": 47,
+          "context_integrity": 0.95,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 3,
+          "deals": 3,
+          "spend": 15427.2635,
+          "impressions": 824465,
+          "context_limit": 45,
+          "context_integrity": 0.9,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        }
+      ],
+      "api_cost_usd": 0.000449,
+      "total_tokens": 1572,
+      "avg_latency_ms": 657.35,
+      "avg_cpm": 17.04172953352335
+    },
+    "C": {
+      "scenario": "C",
+      "name": "Alkimi Ledger-Backed (5% fee)",
+      "fee_pct": 5.0,
+      "deals": 8,
+      "deal_opportunities": 8,
+      "total_spend": 39566.4395,
+      "total_fees": 1978.3219750000003,
+      "blockchain_costs": 0.008,
+      "total_alkimi_costs": 1978.3299750000003,
+      "total_impressions": 2187162,
+      "context_rot_events": 0,
+      "hallucinations": 0,
+      "hallucination_cost": 0.0,
+      "failed_deals": 0,
+      "daily_results": [
+        {
+          "day": 1,
+          "deals": 3,
+          "spend": 8319.986,
+          "alkimi_fee": 415.99930000000006,
+          "impressions": 639977,
+          "blockchain_cost": 0.003,
+          "hallucinations": 0
+        },
+        {
+          "day": 2,
+          "deals": 2,
+          "spend": 12627.288,
+          "alkimi_fee": 631.3644,
+          "impressions": 722720,
+          "blockchain_cost": 0.002,
+          "hallucinations": 0
+        },
+        {
+          "day": 3,
+          "deals": 3,
+          "spend": 18619.1655,
+          "alkimi_fee": 930.9582750000001,
+          "impressions": 824465,
+          "blockchain_cost": 0.003,
+          "hallucinations": 0
+        }
+      ],
+      "api_cost_usd": 0.000495,
+      "total_tokens": 1756,
+      "avg_latency_ms": 811.28,
+      "avg_cpm": 18.090310411391567
+    }
+  },
+  "end_time": "2026-01-30T12:15:54.425536",
+  "total_api_cost_usd": 0.000944
+}
