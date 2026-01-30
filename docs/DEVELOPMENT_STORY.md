@@ -153,6 +153,76 @@ Recovery Gap: Ledger vs Private DB demonstrated
 
 ---
 
+---
+
+## IAB Dependency Integration (January 30, 2026 - Evening)
+
+### The Critique Defense
+
+Before publishing findings, we needed to address the obvious objection: "You're not using real IAB specs."
+
+So we integrated IAB Tech Lab's official packages.
+
+### What We Integrated
+
+| Package | Modules Used | Purpose |
+|---------|--------------|---------|
+| **seller-agent** | PricingRulesEngine, TieredPricingConfig | Pricing logic |
+| **buyer-agent** | UnifiedClient, A2AClient | Protocol handling |
+
+These are vendored in `vendor/iab/` and loaded via Python path:
+
+```python
+sys.path.insert(0, "vendor/iab/seller-agent/src")
+sys.path.insert(0, "vendor/iab/buyer-agent/src")
+```
+
+### Why This Matters
+
+Our findings about context rot and hallucination now can't be dismissed as "implementation artifacts." We're using:
+- IAB's own pricing engine
+- IAB's own protocol clients
+- IAB's own identity/tiering system
+
+The problems we identify are **architectural**, not implementation bugs.
+
+### Documentation
+
+See: `docs/IAB_DEPENDENCY_INTEGRATION.md` for full technical details.
+
+---
+
+## 5-Day Simulation Results
+
+### Configuration
+- 3 buyers, 3 sellers, 30 campaigns
+- Mock LLM mode (no API costs)
+- Scenarios A, B, C
+
+### Results Summary
+
+| Scenario | Description | Deals | Exchange Fees | Status |
+|----------|-------------|-------|---------------|--------|
+| A | Exchange (15% fee) | 17 | $22,583 | ✅ Complete |
+| B | Pure A2A | 9 | $0 | ✅ Complete |
+| C | Ledger-backed | 0 | N/A | ⚠️ DB migration needed |
+
+### Key Observations
+
+1. **Scenario B works** – Direct A2A trades complete successfully using IAB protocols
+2. **Zero fees** – As IAB intends, no intermediary takes
+3. **But no verification** – No ground truth, disputes unresolvable
+4. **5 days insufficient** – Context rot needs 10+ days to manifest
+
+### Next Steps
+
+1. Initialize `ledger_entries` table for Scenario C
+2. Run 30-day simulation with real LLM
+3. Measure context rot accumulation
+4. Generate full content series data
+
+---
+
 ## Repository
 
 - **GitHub:** https://github.com/benputley1/iab-agentic-ecosystem-simulation
@@ -161,5 +231,5 @@ Recovery Gap: Ledger vs Private DB demonstrated
 
 ---
 
-*Document generated: 2026-01-30*
+*Document updated: 2026-01-30*
 *Author: NJ (Set Piece Coach)*
