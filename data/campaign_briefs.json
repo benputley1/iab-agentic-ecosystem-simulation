@@ -1,0 +1,445 @@
+{
+  "campaigns": [
+    {
+      "id": "CAMP-001",
+      "name": "Q1 Brand Awareness - Auto",
+      "advertiser": "TurboMotors Inc",
+      "agency": "MediaVelocity",
+      "objective": "brand_awareness",
+      "category": "automotive",
+      "budget_usd": 150000,
+      "flight_dates": {
+        "start": "2025-02-01",
+        "end": "2025-03-02"
+      },
+      "kpis": {
+        "target_impressions": 15000000,
+        "target_reach": 2500000,
+        "viewability_min": 0.70,
+        "brand_lift_target": 0.05
+      },
+      "targeting": {
+        "geo": ["US", "CA"],
+        "age": "25-54",
+        "gender": "all",
+        "interests": ["automotive", "technology", "luxury"],
+        "income": "high",
+        "daypart": "all"
+      },
+      "channels": {
+        "ctv": { "allocation_pct": 0.40, "cpm_floor": 18.00, "cpm_max": 35.00 },
+        "video": { "allocation_pct": 0.35, "cpm_floor": 12.00, "cpm_max": 28.00 },
+        "display": { "allocation_pct": 0.25, "cpm_floor": 4.00, "cpm_max": 12.00 }
+      },
+      "creative_specs": {
+        "video_lengths": [15, 30],
+        "display_sizes": ["300x250", "728x90", "320x50"],
+        "messaging": "New 2025 lineup launch"
+      },
+      "brand_safety": {
+        "blocked_categories": ["adult", "gambling", "violence", "fake_news"],
+        "required_viewability_vendor": "MOAT"
+      }
+    },
+    {
+      "id": "CAMP-002",
+      "name": "Spring Sale - Retail Performance",
+      "advertiser": "StyleHouse Fashion",
+      "agency": "ConversionMax",
+      "objective": "conversions",
+      "category": "retail_fashion",
+      "budget_usd": 75000,
+      "flight_dates": {
+        "start": "2025-02-01",
+        "end": "2025-03-02"
+      },
+      "kpis": {
+        "target_roas": 4.5,
+        "target_cpa": 25.00,
+        "target_conversions": 3000,
+        "click_through_rate_min": 0.008
+      },
+      "targeting": {
+        "geo": ["US"],
+        "age": "18-44",
+        "gender": "female",
+        "interests": ["fashion", "shopping", "lifestyle"],
+        "income": "medium_high",
+        "daypart": "evening_weekend"
+      },
+      "channels": {
+        "display": { "allocation_pct": 0.50, "cpm_floor": 3.00, "cpm_max": 15.00 },
+        "video": { "allocation_pct": 0.30, "cpm_floor": 8.00, "cpm_max": 20.00 },
+        "native": { "allocation_pct": 0.20, "cpm_floor": 5.00, "cpm_max": 18.00 }
+      },
+      "creative_specs": {
+        "video_lengths": [6, 15],
+        "display_sizes": ["300x250", "300x600", "320x50"],
+        "messaging": "Up to 50% off spring collection"
+      },
+      "attribution": {
+        "window_click": 30,
+        "window_view": 1,
+        "model": "last_touch"
+      },
+      "retargeting": {
+        "enabled": true,
+        "segments": ["cart_abandoners", "product_viewers", "past_purchasers"],
+        "frequency_cap": 5
+      }
+    },
+    {
+      "id": "CAMP-003",
+      "name": "B2B Lead Gen - Enterprise SaaS",
+      "advertiser": "CloudSync Solutions",
+      "agency": "B2B Demand Co",
+      "objective": "lead_generation",
+      "category": "technology_b2b",
+      "budget_usd": 200000,
+      "flight_dates": {
+        "start": "2025-02-01",
+        "end": "2025-03-02"
+      },
+      "kpis": {
+        "target_leads": 500,
+        "cost_per_lead_max": 400.00,
+        "lead_quality_score_min": 7,
+        "demo_request_rate": 0.15
+      },
+      "targeting": {
+        "geo": ["US", "UK", "DE"],
+        "job_titles": ["CTO", "VP Engineering", "IT Director", "DevOps Lead"],
+        "company_size": "500+",
+        "industries": ["finance", "healthcare", "technology"],
+        "intent_signals": ["cloud_migration", "devops_tools", "enterprise_software"]
+      },
+      "channels": {
+        "display": { "allocation_pct": 0.35, "cpm_floor": 8.00, "cpm_max": 25.00 },
+        "video": { "allocation_pct": 0.25, "cpm_floor": 15.00, "cpm_max": 40.00 },
+        "native": { "allocation_pct": 0.25, "cpm_floor": 10.00, "cpm_max": 30.00 },
+        "audio": { "allocation_pct": 0.15, "cpm_floor": 12.00, "cpm_max": 28.00 }
+      },
+      "creative_specs": {
+        "video_lengths": [30, 60],
+        "display_sizes": ["300x250", "160x600", "970x250"],
+        "messaging": "Reduce cloud costs by 40%"
+      },
+      "frequency_cap": {
+        "impressions": 3,
+        "period_days": 7
+      }
+    },
+    {
+      "id": "CAMP-004",
+      "name": "Summer Travel - Consideration",
+      "advertiser": "WanderLux Resorts",
+      "agency": "TravelMedia Group",
+      "objective": "consideration",
+      "category": "travel_hospitality",
+      "budget_usd": 120000,
+      "flight_dates": {
+        "start": "2025-02-01",
+        "end": "2025-03-02"
+      },
+      "kpis": {
+        "target_impressions": 8000000,
+        "site_visit_rate": 0.012,
+        "time_on_site_min": 90,
+        "booking_intent_lift": 0.08
+      },
+      "targeting": {
+        "geo": ["US", "CA", "UK", "AU"],
+        "age": "30-60",
+        "gender": "all",
+        "interests": ["travel", "luxury", "adventure", "family"],
+        "income": "high",
+        "travel_intent": ["researching_vacation", "flight_searches"]
+      },
+      "channels": {
+        "ctv": { "allocation_pct": 0.45, "cpm_floor": 20.00, "cpm_max": 38.00 },
+        "video": { "allocation_pct": 0.35, "cpm_floor": 14.00, "cpm_max": 30.00 },
+        "display": { "allocation_pct": 0.20, "cpm_floor": 5.00, "cpm_max": 15.00 }
+      },
+      "creative_specs": {
+        "video_lengths": [15, 30, 60],
+        "display_sizes": ["300x250", "970x250", "320x480"],
+        "messaging": "Your dream vacation awaits"
+      },
+      "sequential_messaging": {
+        "enabled": true,
+        "stages": ["awareness", "consideration", "intent"],
+        "creative_rotation": "sequential"
+      }
+    },
+    {
+      "id": "CAMP-005",
+      "name": "App Install - Gaming",
+      "advertiser": "EpicQuest Games",
+      "agency": "MobileFirst Media",
+      "objective": "app_installs",
+      "category": "gaming_mobile",
+      "budget_usd": 50000,
+      "flight_dates": {
+        "start": "2025-02-01",
+        "end": "2025-03-02"
+      },
+      "kpis": {
+        "target_installs": 25000,
+        "cost_per_install_max": 2.00,
+        "day_7_retention_min": 0.20,
+        "in_app_purchase_rate": 0.05
+      },
+      "targeting": {
+        "geo": ["US", "CA", "UK", "AU", "DE"],
+        "age": "18-35",
+        "gender": "all",
+        "device": ["ios", "android"],
+        "interests": ["gaming", "mobile_games", "rpg", "strategy"],
+        "app_categories_installed": ["games_casual", "games_action"]
+      },
+      "channels": {
+        "video": { "allocation_pct": 0.55, "cpm_floor": 6.00, "cpm_max": 18.00 },
+        "display": { "allocation_pct": 0.30, "cpm_floor": 2.00, "cpm_max": 10.00 },
+        "playable": { "allocation_pct": 0.15, "cpm_floor": 8.00, "cpm_max": 22.00 }
+      },
+      "creative_specs": {
+        "video_lengths": [15, 30],
+        "display_sizes": ["320x480", "300x250"],
+        "messaging": "Join 10M players - Play Free!"
+      },
+      "attribution": {
+        "mmp": "AppsFlyer",
+        "lookback_click": 7,
+        "lookback_view": 1
+      }
+    },
+    {
+      "id": "CAMP-006",
+      "name": "CPG Product Launch - FMCG",
+      "advertiser": "FreshBrew Coffee Co",
+      "agency": "ConsumerConnect",
+      "objective": "product_launch",
+      "category": "consumer_goods",
+      "budget_usd": 180000,
+      "flight_dates": {
+        "start": "2025-02-01",
+        "end": "2025-03-02"
+      },
+      "kpis": {
+        "target_reach": 5000000,
+        "target_frequency": 4.5,
+        "aided_awareness_lift": 0.12,
+        "purchase_intent_lift": 0.06
+      },
+      "targeting": {
+        "geo": ["US"],
+        "age": "25-54",
+        "gender": "all",
+        "interests": ["coffee", "food_beverage", "health_wellness"],
+        "purchase_behavior": ["coffee_buyers", "premium_grocery"]
+      },
+      "channels": {
+        "ctv": { "allocation_pct": 0.35, "cpm_floor": 16.00, "cpm_max": 32.00 },
+        "video": { "allocation_pct": 0.30, "cpm_floor": 10.00, "cpm_max": 24.00 },
+        "audio": { "allocation_pct": 0.20, "cpm_floor": 8.00, "cpm_max": 18.00 },
+        "display": { "allocation_pct": 0.15, "cpm_floor": 3.00, "cpm_max": 10.00 }
+      },
+      "creative_specs": {
+        "video_lengths": [15, 30],
+        "audio_lengths": [15, 30],
+        "display_sizes": ["300x250", "728x90", "970x250"],
+        "messaging": "New cold brew - pure energy"
+      },
+      "measurement": {
+        "brand_lift_study": true,
+        "sales_lift_study": true,
+        "partners": ["Nielsen", "IRI"]
+      }
+    },
+    {
+      "id": "CAMP-007",
+      "name": "Financial Services - Account Opens",
+      "advertiser": "NextGen Bank",
+      "agency": "FinanceMedia Partners",
+      "objective": "account_signups",
+      "category": "financial_services",
+      "budget_usd": 250000,
+      "flight_dates": {
+        "start": "2025-02-01",
+        "end": "2025-03-02"
+      },
+      "kpis": {
+        "target_signups": 2500,
+        "cost_per_acquisition_max": 100.00,
+        "funded_account_rate": 0.60,
+        "first_deposit_avg": 500.00
+      },
+      "targeting": {
+        "geo": ["US"],
+        "age": "22-45",
+        "gender": "all",
+        "interests": ["personal_finance", "investing", "technology"],
+        "income": "medium_high",
+        "credit_score": "good_excellent",
+        "life_events": ["new_job", "moving", "marriage"]
+      },
+      "channels": {
+        "display": { "allocation_pct": 0.40, "cpm_floor": 6.00, "cpm_max": 20.00 },
+        "video": { "allocation_pct": 0.35, "cpm_floor": 12.00, "cpm_max": 32.00 },
+        "native": { "allocation_pct": 0.25, "cpm_floor": 8.00, "cpm_max": 25.00 }
+      },
+      "creative_specs": {
+        "video_lengths": [15, 30],
+        "display_sizes": ["300x250", "300x600", "728x90"],
+        "messaging": "Bank smarter. Earn 4.5% APY."
+      },
+      "compliance": {
+        "required_disclosures": true,
+        "fair_lending_compliant": true,
+        "apy_as_of_date": "2025-02-01"
+      },
+      "fraud_prevention": {
+        "invalid_traffic_threshold": 0.01,
+        "verification_vendor": "DoubleVerify"
+      }
+    },
+    {
+      "id": "CAMP-008",
+      "name": "Healthcare Awareness - Pharma",
+      "advertiser": "WellCare Pharma",
+      "agency": "HealthMedia Solutions",
+      "objective": "disease_awareness",
+      "category": "pharmaceutical",
+      "budget_usd": 300000,
+      "flight_dates": {
+        "start": "2025-02-01",
+        "end": "2025-03-02"
+      },
+      "kpis": {
+        "target_reach": 4000000,
+        "hcp_reach": 50000,
+        "website_visits": 100000,
+        "patient_education_downloads": 5000
+      },
+      "targeting": {
+        "geo": ["US"],
+        "age": "45-70",
+        "gender": "all",
+        "health_conditions": ["diabetes_risk", "cardiovascular"],
+        "hcp_targeting": {
+          "specialties": ["endocrinology", "cardiology", "internal_medicine"],
+          "npi_verified": true
+        }
+      },
+      "channels": {
+        "ctv": { "allocation_pct": 0.40, "cpm_floor": 22.00, "cpm_max": 45.00 },
+        "video": { "allocation_pct": 0.30, "cpm_floor": 15.00, "cpm_max": 35.00 },
+        "display": { "allocation_pct": 0.20, "cpm_floor": 8.00, "cpm_max": 22.00 },
+        "native": { "allocation_pct": 0.10, "cpm_floor": 10.00, "cpm_max": 28.00 }
+      },
+      "creative_specs": {
+        "video_lengths": [60, 90],
+        "display_sizes": ["300x250", "728x90"],
+        "messaging": "Know your risk. Take control."
+      },
+      "compliance": {
+        "isi_required": true,
+        "fair_balance": true,
+        "mlr_approved": true,
+        "veeva_vault_id": "VV-2025-0142"
+      }
+    }
+  ],
+  "market_conditions": {
+    "seasonality": {
+      "february": { "demand_multiplier": 1.1, "note": "Post-Super Bowl, Valentine's Day" },
+      "march_early": { "demand_multiplier": 1.0, "note": "Standard demand" }
+    },
+    "competitive_landscape": {
+      "automotive": { "competition_level": "high", "avg_cpm_premium": 1.15 },
+      "retail": { "competition_level": "medium", "avg_cpm_premium": 1.05 },
+      "b2b": { "competition_level": "medium", "avg_cpm_premium": 1.10 },
+      "travel": { "competition_level": "high", "avg_cpm_premium": 1.20 },
+      "gaming": { "competition_level": "very_high", "avg_cpm_premium": 1.25 },
+      "cpg": { "competition_level": "high", "avg_cpm_premium": 1.12 },
+      "finance": { "competition_level": "very_high", "avg_cpm_premium": 1.30 },
+      "pharma": { "competition_level": "medium", "avg_cpm_premium": 1.08 }
+    }
+  },
+  "sellers": [
+    {
+      "id": "SELL-001",
+      "name": "PremiumStream TV",
+      "type": "ctv_publisher",
+      "inventory": ["ctv"],
+      "quality_score": 0.92,
+      "avg_viewability": 0.95,
+      "floor_premium": 1.10
+    },
+    {
+      "id": "SELL-002",
+      "name": "VideoNet Exchange",
+      "type": "video_ssp",
+      "inventory": ["video", "ctv"],
+      "quality_score": 0.85,
+      "avg_viewability": 0.78,
+      "floor_premium": 1.00
+    },
+    {
+      "id": "SELL-003",
+      "name": "DisplayMax SSP",
+      "type": "display_ssp",
+      "inventory": ["display", "native"],
+      "quality_score": 0.80,
+      "avg_viewability": 0.65,
+      "floor_premium": 0.95
+    },
+    {
+      "id": "SELL-004",
+      "name": "MobileFirst Network",
+      "type": "mobile_ssp",
+      "inventory": ["display", "video", "playable"],
+      "quality_score": 0.75,
+      "avg_viewability": 0.70,
+      "floor_premium": 0.90
+    },
+    {
+      "id": "SELL-005",
+      "name": "AudioWave Network",
+      "type": "audio_publisher",
+      "inventory": ["audio"],
+      "quality_score": 0.88,
+      "avg_viewability": null,
+      "listen_through_rate": 0.82,
+      "floor_premium": 1.05
+    },
+    {
+      "id": "SELL-006",
+      "name": "NewsMedia Premium",
+      "type": "premium_publisher",
+      "inventory": ["display", "video", "native"],
+      "quality_score": 0.94,
+      "avg_viewability": 0.85,
+      "floor_premium": 1.25,
+      "brand_safe_certified": true
+    }
+  ],
+  "simulation_params": {
+    "daily_bid_requests_range": [5000, 15000],
+    "decision_complexity_factors": [
+      "multi_kpi_optimization",
+      "cross_channel_attribution",
+      "frequency_management",
+      "brand_safety_filtering",
+      "budget_pacing",
+      "competitive_bidding"
+    ],
+    "context_pressure_events": [
+      { "day": 5, "event": "competitor_surge", "description": "Major competitor increases spend 50%" },
+      { "day": 10, "event": "inventory_shortage", "description": "Premium CTV inventory constrained" },
+      { "day": 15, "event": "mid_flight_optimization", "description": "Client requests KPI rebalancing" },
+      { "day": 20, "event": "brand_safety_incident", "description": "News event triggers brand safety concerns" },
+      { "day": 25, "event": "end_of_month_push", "description": "Budget flush, increased competition" }
+    ]
+  }
+}

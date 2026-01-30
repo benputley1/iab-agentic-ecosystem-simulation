@@ -35,7 +35,9 @@ This simulation environment compares **three approaches** to programmatic advert
 
 ## Quick Start
 
-### Option 1: Quick Test (No Infrastructure Required)
+### Option 1: Real LLM Context Simulation (Recommended)
+
+This mode uses **actual Claude API calls** with **real context accumulation** to demonstrate authentic context degradation in A2A systems.
 
 ```bash
 # Clone the repo
@@ -45,6 +47,26 @@ cd iab-agentic-ecosystem-simulation
 # Install dependencies
 pip install -e ".[dev]"
 
+# Set your Anthropic API key
+export ANTHROPIC_API_KEY=your_key_here
+
+# Run real context simulation (30 days, 100 deals/day)
+python scripts/run_real_context_simulation.py --days 30 --deals-per-day 100
+
+# Results saved to results/real_context_*.json
+```
+
+**What this measures:**
+- Full transaction history passed to every LLM call (no artificial limiting)
+- Context grows naturally: Day 1 ~800 tokens → Day 30 ~30,000+ tokens
+- Hallucinations measured against actual token count, not simulated "decay"
+- Authentic demonstration of how A2A agents degrade as memory fills
+
+**Expected cost:** $90-150 for 30-day simulation (Sonnet pricing)
+
+### Option 2: Quick Test (No Infrastructure Required)
+
+```bash
 # Run quick test with mock mode (no APIs, no databases)
 rtb-sim test-scenario --scenario c --skip-infra
 
@@ -75,6 +97,56 @@ rtb-sim run --scenario a,b,c --days 30 --mock-llm
 # 6. View results in Grafana
 open http://localhost:3000
 ```
+
+## Real Context Simulation: Authentic A2A Degradation
+
+The `run_real_context_simulation.py` script demonstrates **real-world context degradation** in A2A systems:
+
+### How It Works
+
+```
+Day 1:  Agent has no history
+        → Prompt: ~800 tokens
+        → Decision quality: High ✅
+
+Day 15: Agent accumulates 1,500 transactions
+        → Prompt: ~15,000 tokens
+        → Decision quality: Degrading ⚠️
+
+Day 30: Agent has 3,000+ transactions in memory
+        → Prompt: ~30,000+ tokens
+        → Decision quality: Hallucinations increasing 🔴
+```
+
+### Key Difference from Simulated Decay
+
+| Simulated (Old) | Real Context (New) |
+|-----------------|-------------------|
+| Artificially limit history access | Full history in every call |
+| Formula-based "context health %" | Actual token accumulation |
+| Predictable decay curve | Authentic LLM behavior |
+| Cheap (small prompts) | Realistic cost (growing prompts) |
+
+### Metrics Tracked
+
+- **`avg_context_size`**: Average input tokens per call (grows over time)
+- **`first_hallucination_at_tokens`**: When first hallucination occurred
+- **`hallucination_spike_threshold`**: Token count where rate exceeded 5%
+- **`hallucination_by_context_size`**: Correlation between context and errors
+
+### Campaign Briefs
+
+The simulation uses 8 realistic campaign briefs (`data/campaign_briefs.json`):
+- Auto brand awareness ($150K, CTV/video/display)
+- Retail performance ($75K, display/video/native)
+- B2B lead gen ($200K, multi-channel)
+- Travel consideration ($120K, CTV-heavy)
+- Mobile gaming installs ($50K, video/playable)
+- CPG product launch ($180K, CTV/video/audio)
+- Financial services ($250K, display/video/native)
+- Pharma awareness ($300K, CTV/video with compliance)
+
+---
 
 ## The Problem: Cross-Agent Reconciliation in IAB's A2A Approach
 
