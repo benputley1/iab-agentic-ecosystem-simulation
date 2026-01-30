@@ -447,7 +447,7 @@ class BuyerAgentWrapper:
         if self.mock_llm:
             # Use a lightweight model config for testing
             llm = LLM(
-                model="anthropic/claude-3-haiku-20240307",
+                model="claude-sonnet-4-20250514",
                 temperature=0.1,
             )
         else:

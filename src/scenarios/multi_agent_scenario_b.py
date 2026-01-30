@@ -85,9 +85,9 @@ class MultiAgentScenarioBConfig(ScenarioConfig):
     
     # Multi-agent specific
     enable_hierarchy: bool = True
-    l1_model: str = "claude-opus"
-    l2_model: str = "claude-sonnet"
-    l3_model: str = "claude-haiku"
+    l1_model: str = "claude-sonnet-4-20250514"
+    l2_model: str = "claude-sonnet-4-20250514"
+    l3_model: str = "claude-sonnet-4-20250514"
 
 
 @dataclass

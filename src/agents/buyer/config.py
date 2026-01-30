@@ -38,8 +38,8 @@ class BuyerAgentSettings(BaseSettings):
 
     # LLM Configuration
     anthropic_api_key: str = ""
-    default_llm_model: str = "anthropic/claude-3-haiku-20240307"
-    manager_llm_model: str = "anthropic/claude-3-haiku-20240307"
+    default_llm_model: str = "claude-sonnet-4-20250514"
+    manager_llm_model: str = "claude-sonnet-4-20250514"
     llm_temperature: float = 0.3
     llm_max_tokens: int = 4096
 

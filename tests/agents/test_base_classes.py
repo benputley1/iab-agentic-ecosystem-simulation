@@ -549,7 +549,7 @@ class TestOrchestratorAgent:
         agent = MockOrchestratorAgent(name="TestOrchestrator")
         
         assert agent.name == "TestOrchestrator"
-        assert agent.model == "claude-opus-4-20250514"
+        assert agent.model == "claude-sonnet-4-20250514"
     
     def test_register_specialist(self):
         """Test registering specialists."""

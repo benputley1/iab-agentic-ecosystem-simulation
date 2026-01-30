@@ -37,7 +37,7 @@ from .specialist import SpecialistAgent
 logger = structlog.get_logger(__name__)
 
 # Default model for L1 orchestrator agents
-L1_MODEL = "claude-opus-4-20250514"
+L1_MODEL = "claude-sonnet-4-20250514"
 
 
 class CampaignState(BaseModel):

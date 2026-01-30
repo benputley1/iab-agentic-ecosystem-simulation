@@ -67,9 +67,9 @@ class MultiAgentScenarioAConfig(ScenarioConfig):
     
     # Multi-agent specific
     enable_hierarchy: bool = True
-    l1_model: str = "claude-opus"  # L1 uses Opus
-    l2_model: str = "claude-sonnet"  # L2 uses Sonnet
-    l3_model: str = "claude-haiku"  # L3 uses Haiku
+    l1_model: str = "claude-sonnet-4-20250514"  # L1 uses Opus
+    l2_model: str = "claude-sonnet-4-20250514"  # L2 uses Sonnet
+    l3_model: str = "claude-sonnet-4-20250514"  # L3 uses Haiku
     
     # Context configuration
     context_rot_rate: float = 0.05  # 5% rot per level
