@@ -755,7 +755,7 @@ class ScenarioB(BaseScenario):
                             seller_id=seller_id,
                             offered_cpm=cpm,
                             available_impressions=impressions,
-                            deal_type=DealType.PA,
+                            deal_type=DealType.PRIVATE_AUCTION,
                             scenario="B",
                         )
                         
