@@ -222,6 +222,12 @@ class ScenarioA(BaseScenario):
             for campaign in active_campaigns:
                 # Submit bid request
                 request = self._create_bid_request(buyer, campaign)
+
+                # Register request with exchange for response correlation
+                # This is needed because the exchange needs to match responses
+                # back to their original requests
+                self._exchange._pending_requests[request.request_id] = request
+
                 await self._bus.publish_bid_request(request)
 
                 logger.debug(

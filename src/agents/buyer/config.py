@@ -1,9 +1,32 @@
 """Configuration for buyer agents in RTB simulation."""
 
+import json
+import os
 from functools import lru_cache
+from pathlib import Path
 from typing import Optional
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
+
+
+def _load_api_key_from_clawdbot() -> str:
+    """Load Anthropic API key from clawdbot.json if available."""
+    clawdbot_paths = [
+        Path.home() / ".clawdbot" / "clawdbot.json",
+        Path("/root/.clawdbot/clawdbot.json"),
+    ]
+    for path in clawdbot_paths:
+        if path.exists():
+            try:
+                with open(path) as f:
+                    config = json.load(f)
+                key = config.get("providers", {}).get("anthropic", {}).get("apiKey", "")
+                if key:
+                    return key
+            except (json.JSONDecodeError, IOError):
+                pass
+    return ""
 
 
 class BuyerAgentSettings(BaseSettings):
@@ -52,6 +75,25 @@ class BuyerAgentSettings(BaseSettings):
         "env_file_encoding": "utf-8",
         "extra": "ignore",
     }
+
+    @model_validator(mode="after")
+    def resolve_api_key(self) -> "BuyerAgentSettings":
+        """Load API key from multiple sources if not set.
+
+        Priority:
+        1. RTB_BUYER_ANTHROPIC_API_KEY (handled by pydantic)
+        2. ANTHROPIC_API_KEY environment variable
+        3. clawdbot.json config file
+        """
+        if not self.anthropic_api_key:
+            # Try standard env var
+            self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "")
+
+        if not self.anthropic_api_key:
+            # Try clawdbot config
+            self.anthropic_api_key = _load_api_key_from_clawdbot()
+
+        return self
 
 
 @lru_cache
