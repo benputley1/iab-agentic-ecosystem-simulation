@@ -11,12 +11,12 @@ from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Optional
 import structlog
 
-from ..infrastructure.redis_bus import RedisBus
-from ..infrastructure.message_schemas import DealConfirmation
+from infrastructure.redis_bus import RedisBus
+from infrastructure.message_schemas import DealConfirmation
 
 if TYPE_CHECKING:
-    from ..infrastructure.ground_truth import GroundTruthRepository
-    from ..metrics.collector import MetricCollector
+    from infrastructure.ground_truth import GroundTruthRepository
+    from metrics.collector import MetricCollector
 
 
 logger = structlog.get_logger()
@@ -309,7 +309,7 @@ class BaseScenario(ABC):
     async def connect_bus(self) -> RedisBus:
         """Connect to Redis bus if not already connected."""
         if self._bus is None:
-            from ..infrastructure.redis_bus import create_redis_bus
+            from infrastructure.redis_bus import create_redis_bus
 
             self._bus = await create_redis_bus(
                 consumer_id=f"scenario-{self.scenario_id}"
@@ -340,7 +340,7 @@ class BaseScenario(ABC):
     async def connect_ground_truth(self) -> "GroundTruthRepository":
         """Connect to ground truth repository if not already connected."""
         if self._ground_truth_repo is None:
-            from ..infrastructure.ground_truth import create_ground_truth_repo
+            from infrastructure.ground_truth import create_ground_truth_repo
 
             self._ground_truth_repo = await create_ground_truth_repo()
             self._owned_ground_truth = True
@@ -452,7 +452,7 @@ class BaseScenario(ABC):
         # Record to ground truth if connected
         if self._ground_truth_repo:
             try:
-                from ..infrastructure.ground_truth import ContextRotEventType
+                from infrastructure.ground_truth import ContextRotEventType
 
                 event_type = ContextRotEventType.DECAY if is_decay else ContextRotEventType.RESTART
 

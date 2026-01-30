@@ -18,11 +18,11 @@ from datetime import datetime
 from typing import Any, Optional
 
 from ..agents.seller.l1_inventory_manager import InventoryManager
-from ..agents.seller.l2_display import DisplayInventorySpecialist
-from ..agents.seller.l2_video import VideoInventorySpecialist
-from ..agents.seller.l2_ctv import CTVInventorySpecialist
-from ..agents.seller.l2_mobile import MobileInventorySpecialist
-from ..agents.seller.l2_native import NativeInventorySpecialist
+from ..agents.seller.l2_display import DisplayInventoryAgent
+from ..agents.seller.l2_video import VideoInventoryAgent
+from ..agents.seller.l2_ctv import CTVInventoryAgent
+from ..agents.seller.l2_mobile import MobileAppInventoryAgent
+from ..agents.seller.l2_native import NativeInventoryAgent
 from ..agents.seller.l3_pricing import PricingAgent
 from ..agents.seller.l3_avails import AvailsAgent
 from ..agents.seller.l3_audience_validator import AudienceValidatorAgent
@@ -379,19 +379,19 @@ class SellerAgentSystem:
         
         # Create L2 Channel Inventory Specialists
         self._l2_inventory = {
-            ChannelType.DISPLAY.value: DisplayInventorySpecialist(
+            ChannelType.DISPLAY.value: DisplayInventoryAgent(
                 agent_id=f"{self.seller_id}-l2-display",
             ),
-            ChannelType.VIDEO.value: VideoInventorySpecialist(
+            ChannelType.VIDEO.value: VideoInventoryAgent(
                 agent_id=f"{self.seller_id}-l2-video",
             ),
-            ChannelType.CTV.value: CTVInventorySpecialist(
+            ChannelType.CTV.value: CTVInventoryAgent(
                 agent_id=f"{self.seller_id}-l2-ctv",
             ),
-            ChannelType.MOBILE.value: MobileInventorySpecialist(
+            ChannelType.MOBILE.value: MobileAppInventoryAgent(
                 agent_id=f"{self.seller_id}-l2-mobile",
             ),
-            ChannelType.NATIVE.value: NativeInventorySpecialist(
+            ChannelType.NATIVE.value: NativeInventoryAgent(
                 agent_id=f"{self.seller_id}-l2-native",
             ),
         }
