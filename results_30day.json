@@ -1,0 +1,10 @@
+{
+  "state": "failed",
+  "scenarios": [],
+  "start_time": "2026-01-30T08:10:14.222877",
+  "end_time": "2026-01-30T08:10:18.791158",
+  "total_events_injected": 0,
+  "checkpoints_created": 0,
+  "error": "Error importing native provider: ANTHROPIC_API_KEY is required",
+  "scenario_results": []
+}

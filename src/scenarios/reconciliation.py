@@ -187,6 +187,17 @@ class DiscrepancyConfig:
     # Resolution probabilities
     dispute_resolution_prob: float = 0.50   # 50% of 10-15% disputes resolve
     severe_resolution_prob: float = 0.30    # 30% of 15-25% disputes resolve
+    
+    # Timing discrepancy rate
+    timing_rate: float = 0.15               # 15% of daily events have timing issues
+    
+    # Additional discrepancy rates (for inject_daily_discrepancy)
+    ivt_disagreement_rate: float = 0.20     # 20% have IVT disagreement
+    viewability_rate: float = 0.15          # 15% have viewability issues
+    latency_loss_rate: float = 0.08         # 8% have latency losses
+    data_loss_rate: float = 0.01            # 1% per day data loss
+    currency_variance: float = 0.05         # 5% have currency variance
+    unresolvable_above: float = 0.20        # >20% discrepancy = unresolvable
 
 
 class DiscrepancyInjector:
