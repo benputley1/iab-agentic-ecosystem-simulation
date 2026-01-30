@@ -40,6 +40,90 @@ logger = structlog.get_logger(__name__)
 L2_MODEL = "claude-sonnet-4-20250514"
 
 
+# =============================================================================
+# Shared Models for L2 Specialists (used by both buyer and seller)
+# =============================================================================
+
+class FitScore(BaseModel):
+    """Score indicating how well something fits criteria."""
+    score: float = Field(ge=0.0, le=1.0, description="Fit score 0-1")
+    confidence: float = Field(ge=0.0, le=1.0, default=1.0)
+    factors: dict[str, float] = Field(default_factory=dict)
+    notes: str = ""
+
+
+class Campaign(BaseModel):
+    """Campaign representation for specialist agents."""
+    campaign_id: str
+    name: str
+    objective: str = ""
+    budget: float = 0.0
+    target_impressions: int = 0
+    target_cpm: float = 0.0
+    start_date: str | None = None
+    end_date: str | None = None
+    targeting: dict[str, Any] = Field(default_factory=dict)
+    constraints: dict[str, Any] = Field(default_factory=dict)
+
+
+class Task(BaseModel):
+    """Task to delegate to L3 functional agents."""
+    task_id: str
+    task_type: str
+    description: str
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    priority: int = Field(default=5, ge=1, le=10)
+    context: dict[str, Any] = Field(default_factory=dict)
+
+
+class Result(BaseModel):
+    """Result from L3 functional agent execution."""
+    task_id: str
+    success: bool
+    data: Any = None
+    error: str | None = None
+    execution_time_ms: float = 0.0
+
+
+class AvailsRequest(BaseModel):
+    """Request to check inventory availability."""
+    channel: str
+    impressions_needed: int
+    start_date: str | None = None
+    end_date: str | None = None
+    targeting: dict[str, Any] = Field(default_factory=dict)
+    constraints: dict[str, Any] = Field(default_factory=dict)
+
+
+class AvailsResponse(BaseModel):
+    """Response with availability information."""
+    available: bool
+    impressions_available: int = 0
+    recommended_allocation: int = 0
+    constraints_met: bool = True
+    notes: str = ""
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class PricingRequest(BaseModel):
+    """Request for pricing information."""
+    channel: str
+    impressions: int
+    deal_type: str = "open"  # open, pmp, pg
+    buyer_tier: str = "public"
+    targeting: dict[str, Any] = Field(default_factory=dict)
+
+
+class PricingResponse(BaseModel):
+    """Response with pricing information."""
+    base_cpm: float
+    floor_cpm: float
+    recommended_cpm: float
+    discount_applied: float = 0.0
+    pricing_factors: dict[str, float] = Field(default_factory=dict)
+    notes: str = ""
+
+
 class DelegationRequest(BaseModel):
     """Request to delegate work to an L3 functional agent."""
     functional_agent_id: str

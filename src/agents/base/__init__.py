@@ -54,6 +54,15 @@ from .specialist import (
     DelegationRequest,
     DelegationResult,
     L2_MODEL,
+    # Shared models
+    FitScore,
+    Campaign,
+    Task,
+    Result,
+    AvailsRequest,
+    AvailsResponse,
+    PricingRequest,
+    PricingResponse,
 )
 
 # L1 Orchestrator Agent
@@ -100,6 +109,15 @@ __all__ = [
     "DelegationRequest",
     "DelegationResult",
     "L2_MODEL",
+    # Shared models
+    "FitScore",
+    "Campaign",
+    "Task",
+    "Result",
+    "AvailsRequest",
+    "AvailsResponse",
+    "PricingRequest",
+    "PricingResponse",
     # L1
     "OrchestratorAgent",
     "OrchestratorAgentState",
