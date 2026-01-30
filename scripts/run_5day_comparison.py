@@ -108,12 +108,24 @@ def clear_redis():
 
 
 async def run_scenario_a(days: int, mock_llm: bool, opportunities: List[DealOpportunity]) -> dict:
-    """Run Scenario A: Rent-seeking exchange (15% fees)."""
+    """Run Scenario A: Rent-seeking exchange (15% fees).
+    
+    IMPORTANT: Agents in this scenario ALSO experience context rot, just like
+    Scenario B. The key difference is:
+    - Exchange provides ~60% recovery via transaction log verification
+    - Net effect: Only 40% of context rot errors persist
+    
+    This models reality where DSPs/SSPs use AI for bidding decisions (subject
+    to context limits), but the exchange can catch many errors through
+    reconciliation.
+    """
+    import random
     from src.scenarios.scenario_a import ScenarioA, ScenarioConfig
     from src.infrastructure.message_schemas import BidRequest, BidResponse, DealConfirmation, DealType
     
     logger.info(f"\n{'='*60}")
     logger.info("SCENARIO A: Rent-Seeking Exchange (15% fee)")
+    logger.info("           (with agent context rot, 60% exchange recovery)")
     logger.info(f"{'='*60}")
     
     results = {
@@ -128,9 +140,20 @@ async def run_scenario_a(days: int, mock_llm: bool, opportunities: List[DealOppo
         "total_impressions": 0,
         "context_rot_events": 0,
         "hallucinations": 0,
+        "hallucination_cost": 0.0,  # Cost from errors that slipped past exchange
+        "failed_deals": 0,  # Deals that failed due to unrecovered context rot
+        "exchange_catches": 0,  # Errors caught by exchange verification
         "avg_cpm": 0.0,
         "daily_results": [],
     }
+    
+    rng = random.Random(456)  # Different seed from Scenario B for variation
+    
+    # Context rot parameters (same base rate as Scenario B)
+    context_integrity = 1.0  # Starts at 100%
+    decay_rate = 0.02  # 2% per day (same as Scenario B)
+    base_hallucination_rate = 0.10  # 10% base rate (same as Scenario B)
+    exchange_recovery_rate = 0.60  # Exchange catches 60% of errors
     
     # Group opportunities by day
     by_day = {}
@@ -144,23 +167,74 @@ async def run_scenario_a(days: int, mock_llm: bool, opportunities: List[DealOppo
             day_fees = 0.0
             day_impressions = 0
             day_deals = 0
+            day_hallucinations = 0
+            day_hallucination_cost = 0.0
+            day_failed = 0
+            day_context_rot = 0
+            day_exchange_catches = 0
+            
+            # Apply daily context decay (same as Scenario B)
+            if day > 1:
+                context_loss = context_integrity * decay_rate
+                context_integrity -= context_loss
+                if context_loss > 0:
+                    results["context_rot_events"] += 1
+                    day_context_rot += 1
             
             for opp in day_opps:
-                # Calculate with 15% exchange fee
-                gross_cost = (opp.impressions / 1000) * opp.cpm
-                exchange_fee = gross_cost * 0.15
-                total_cost = gross_cost  # Buyer pays gross
-                seller_revenue = gross_cost - exchange_fee
+                # Calculate base hallucination rate (increases as context degrades)
+                effective_hallucination_rate = base_hallucination_rate * (2 - context_integrity)
                 
-                day_deals += 1
-                day_spend += total_cost
-                day_fees += exchange_fee
-                day_impressions += opp.impressions
+                # Check if agent would hallucinate (BEFORE exchange verification)
+                if rng.random() < effective_hallucination_rate:
+                    # Agent made an error - but exchange may catch it
+                    if rng.random() < exchange_recovery_rate:
+                        # Exchange caught the error via transaction log verification
+                        # Deal proceeds normally (exchange corrects the data)
+                        day_exchange_catches += 1
+                        gross_cost = (opp.impressions / 1000) * opp.cpm
+                        exchange_fee = gross_cost * 0.15
+                        day_deals += 1
+                        day_spend += gross_cost
+                        day_fees += exchange_fee
+                        day_impressions += opp.impressions
+                    else:
+                        # Error slipped past exchange verification
+                        day_hallucinations += 1
+                        
+                        # 50% chance of overpaying, 50% chance of failed deal
+                        if rng.random() < 0.5:
+                            # Overpaid by 10-30% due to hallucinated market data
+                            overpay_factor = 1 + rng.uniform(0.10, 0.30)
+                            hallucinated_cost = (opp.impressions / 1000) * opp.cpm * overpay_factor
+                            correct_cost = (opp.impressions / 1000) * opp.cpm
+                            day_hallucination_cost += (hallucinated_cost - correct_cost)
+                            exchange_fee = hallucinated_cost * 0.15
+                            
+                            day_deals += 1
+                            day_spend += hallucinated_cost
+                            day_fees += exchange_fee
+                            day_impressions += opp.impressions
+                        else:
+                            # Deal failed due to hallucinated terms
+                            day_failed += 1
+                else:
+                    # Normal deal - no hallucination, just standard 15% exchange fee
+                    gross_cost = (opp.impressions / 1000) * opp.cpm
+                    exchange_fee = gross_cost * 0.15
+                    day_deals += 1
+                    day_spend += gross_cost
+                    day_fees += exchange_fee
+                    day_impressions += opp.impressions
             
             results["deals"] += day_deals
             results["total_spend"] += day_spend
             results["total_fees"] += day_fees
             results["total_impressions"] += day_impressions
+            results["hallucinations"] += day_hallucinations
+            results["hallucination_cost"] += day_hallucination_cost
+            results["failed_deals"] += day_failed
+            results["exchange_catches"] += day_exchange_catches
             
             results["daily_results"].append({
                 "day": day,
@@ -168,6 +242,12 @@ async def run_scenario_a(days: int, mock_llm: bool, opportunities: List[DealOppo
                 "spend": day_spend,
                 "fees": day_fees,
                 "impressions": day_impressions,
+                "context_rot": day_context_rot,
+                "context_integrity": context_integrity,
+                "hallucinations": day_hallucinations,
+                "hallucination_cost": day_hallucination_cost,
+                "failed_deals": day_failed,
+                "exchange_catches": day_exchange_catches,
             })
             
             logger.info(
@@ -175,6 +255,9 @@ async def run_scenario_a(days: int, mock_llm: bool, opportunities: List[DealOppo
                 deals=day_deals,
                 spend=f"${day_spend:.2f}",
                 fees=f"${day_fees:.2f}",
+                context_integrity=f"{context_integrity*100:.1f}%",
+                hallucinations=day_hallucinations,
+                exchange_catches=day_exchange_catches,
             )
     except Exception as e:
         logger.error(f"scenario_a.error: {e}")
@@ -539,7 +622,7 @@ def print_comparison_table(results: dict):
     
     rows.append([
         "Failed Deals",
-        "0",
+        str(a.get("failed_deals", 0)),
         str(b.get("failed_deals", 0)),
         "0",
     ])
@@ -567,13 +650,13 @@ def print_comparison_table(results: dict):
     
     rows.append([
         "Hallucination Costs",
-        "N/A",
+        f"${a.get('hallucination_cost', 0):,.2f}",
         f"${b.get('hallucination_cost', 0):,.2f}",
         "$0.00",
     ])
     
     # Total effective cost = fees + hallucination costs
-    a_total_cost = a.get("total_fees", 0)
+    a_total_cost = a.get("total_fees", 0) + a.get("hallucination_cost", 0)
     b_total_cost = b.get("hallucination_cost", 0)
     c_total_cost = c.get("total_alkimi_costs", c.get("total_fees", 0) + c.get("blockchain_costs", 0))
     
@@ -607,21 +690,21 @@ def print_comparison_table(results: dict):
     
     rows.append([
         "Context Rot Events",
-        "N/A (centralized)",
-        str(b.get("context_rot_events", 0)),
+        str(a.get("context_rot_events", 0)) + " (60% recovered)",
+        str(b.get("context_rot_events", 0)) + " (0% recovered)",
         "0 (ledger-backed)",
     ])
     
     rows.append([
         "Hallucinations",
-        "N/A",
+        str(a.get("hallucinations", 0)) + f" (caught: {a.get('exchange_catches', 0)})",
         str(b.get("hallucinations", 0)),
         "0 (ground truth)",
     ])
     
     rows.append([
         "Recovery Success Rate",
-        "N/A",
+        "60% (exchange)",
         "0% (no recovery)",
         "100% (ledger)",
     ])
@@ -645,29 +728,46 @@ def print_comparison_table(results: dict):
     print("KEY FINDINGS")
     print("="*90)
     
-    # 1. Fee savings
+    # 1. Fee/cost savings
     if a.get("total_spend", 0) > 0:
         a_fees = a.get("total_fees", 0)
+        a_hall_costs = a.get("hallucination_cost", 0)
+        a_total = a_fees + a_hall_costs
         c_fees = c.get("total_alkimi_costs", 0)
-        savings = a_fees - c_fees
-        savings_pct = (savings / a_fees * 100) if a_fees > 0 else 0
-        print(f"1. Fee Savings: Alkimi (C) saves ${savings:,.2f} ({savings_pct:.1f}%) vs Traditional (A)")
-        print(f"   - Scenario A fees: ${a_fees:,.2f} (15% of spend)")
-        print(f"   - Scenario C fees: ${c_fees:,.2f} (5% + blockchain)")
+        savings = a_total - c_fees
+        savings_pct = (savings / a_total * 100) if a_total > 0 else 0
+        print(f"1. Total Cost Savings: Alkimi (C) saves ${savings:,.2f} ({savings_pct:.1f}%) vs Traditional (A)")
+        print(f"   - Scenario A costs: ${a_total:,.2f} (15% fees + hallucination losses)")
+        print(f"     └─ Exchange fees: ${a_fees:,.2f}")
+        print(f"     └─ Hallucination costs: ${a_hall_costs:,.2f}")
+        print(f"   - Scenario C costs: ${c_fees:,.2f} (5% + blockchain)")
     
     # 2. Context rot comparison
+    a_rot = a.get("context_rot_events", 0)
     b_rot = b.get("context_rot_events", 0)
     c_rot = c.get("context_rot_events", 0)
-    print(f"\n2. Context Rot: Scenario B had {b_rot} events, Scenario C had {c_rot} events")
-    if b_rot > 0:
-        print(f"   - Direct A2A loses context integrity over time without ledger")
+    print(f"\n2. Context Rot: A={a_rot} events, B={b_rot} events, C={c_rot} events")
+    print(f"   - Both A and B agents experience context rot (2%/day decay)")
+    print(f"   - Scenario A: Exchange catches ~60% of errors via transaction logs")
+    print(f"   - Scenario B: No recovery mechanism - all errors compound")
+    print(f"   - Scenario C: Ledger provides 100% recovery - zero effective rot")
     
     # 3. Hallucinations and failures
+    a_hall = a.get("hallucinations", 0)
+    a_caught = a.get("exchange_catches", 0)
+    a_failed = a.get("failed_deals", 0)
+    a_hall_cost = a.get("hallucination_cost", 0)
     b_hall = b.get("hallucinations", 0)
     b_failed = b.get("failed_deals", 0)
     b_hall_cost = b.get("hallucination_cost", 0)
-    print(f"\n3. Hallucinations & Failures (Scenario B):")
-    print(f"   - {b_hall} hallucinated decisions")
+    print(f"\n3. Hallucinations & Failures:")
+    print(f"   Scenario A (Exchange):")
+    print(f"   - {a_caught} errors caught by exchange verification")
+    print(f"   - {a_hall} hallucinations slipped through")
+    print(f"   - {a_failed} failed deals")
+    print(f"   - ${a_hall_cost:,.2f} in overpayment costs")
+    print(f"   Scenario B (Pure A2A):")
+    print(f"   - {b_hall} hallucinated decisions (no verification)")
     print(f"   - {b_failed} failed deals")
     print(f"   - ${b_hall_cost:,.2f} in overpayment costs")
     
