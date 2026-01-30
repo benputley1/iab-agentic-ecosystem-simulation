@@ -11,7 +11,18 @@ import uuid
 from datetime import date, datetime
 from typing import Any, Optional
 
-from ..base.orchestrator import OrchestratorAgent, AgentContext
+from anthropic import AsyncAnthropic
+
+from ..base.orchestrator import (
+    OrchestratorAgent,
+    CampaignState,
+    StrategicDecision,
+    SpecialistAssignment,
+    L1_MODEL,
+)
+from ..base.context import AgentContext, ContextPriority
+from ..base.state import StateBackend, VolatileStateBackend
+
 from .models import (
     AudienceSpec,
     BuyerTier,
@@ -46,53 +57,6 @@ TIER_DISCOUNTS = {
 }
 
 
-class _LLMResponse:
-    """Wrapper for LLM response with metadata."""
-    
-    def __init__(
-        self,
-        content: str,
-        input_tokens: int,
-        output_tokens: int,
-        latency_ms: float,
-    ):
-        self.content = content
-        self.input_tokens = input_tokens
-        self.output_tokens = output_tokens
-        self.latency_ms = latency_ms
-
-
-class _ContextTracker:
-    """Simple context tracker for recording decisions."""
-    
-    def __init__(self, history: list):
-        self._history = history
-    
-    @property
-    def decisions(self) -> list:
-        """Get the decision history."""
-        return self._history
-    
-    @property
-    def rot_events(self) -> int:
-        """Get rot events count (for compatibility)."""
-        return 0
-    
-    def record_decision(
-        self,
-        action: str,
-        reasoning: str,
-        data: Optional[dict] = None,
-    ) -> None:
-        """Record a decision in the history."""
-        self._history.append({
-            "action": action,
-            "reasoning": reasoning,
-            "data": data or {},
-            "timestamp": datetime.utcnow().isoformat(),
-        })
-
-
 class InventoryManager(OrchestratorAgent):
     """Level 1 Seller Orchestrator using Claude Opus.
     
@@ -107,20 +71,13 @@ class InventoryManager(OrchestratorAgent):
     seller's inventory portfolio.
     """
     
-    agent_type: str = "inventory-manager"
-    description: str = "L1 Seller orchestrator for yield and deal management"
-    
-    @property
-    def system_prompt(self) -> str:
-        """Return the system prompt for this orchestrator."""
-        return INVENTORY_MANAGER_SYSTEM_PROMPT
-    
     def __init__(
         self,
         seller_id: str,
         portfolio: Optional[InventoryPortfolio] = None,
-        api_key: Optional[str] = None,
-        model: str = "claude-opus-4",
+        anthropic_client: Optional[AsyncAnthropic] = None,
+        model: str = L1_MODEL,
+        state_backend: Optional[StateBackend] = None,
         **kwargs,
     ):
         """Initialize the Inventory Manager.
@@ -128,14 +85,17 @@ class InventoryManager(OrchestratorAgent):
         Args:
             seller_id: Unique identifier for this seller
             portfolio: Initial inventory portfolio (can be set later)
-            api_key: Anthropic API key
+            anthropic_client: Anthropic client (creates one if not provided)
             model: LLM model to use (defaults to Opus)
+            state_backend: State storage backend
             **kwargs: Additional args passed to OrchestratorAgent
         """
         super().__init__(
             agent_id=f"inventory-manager-{seller_id}",
-            api_key=api_key,
+            name=f"InventoryManager-{seller_id}",
+            anthropic_client=anthropic_client,
             model=model,
+            state_backend=state_backend,
             **kwargs,
         )
         
@@ -145,16 +105,8 @@ class InventoryManager(OrchestratorAgent):
         # Track active deals
         self._active_deals: dict[str, Deal] = {}
         
-        # L2 specialist registry (for delegation) - override parent
-        self._specialists: dict[str, Any] = {}
-        
-        # Internal context tracking for decisions
+        # Decision history for context tracking
         self._decision_history: list[dict] = []
-        
-        # Metrics
-        self._total_input_tokens = 0
-        self._total_output_tokens = 0
-        self._total_requests = 0
     
     @property
     def portfolio(self) -> InventoryPortfolio:
@@ -166,74 +118,97 @@ class InventoryManager(OrchestratorAgent):
         """Set the inventory portfolio."""
         self._portfolio = value
     
-    @property
-    def _context(self) -> "_ContextTracker":
-        """Get the context tracker for recording decisions."""
-        return _ContextTracker(self._decision_history)
+    # -------------------------------------------------------------------------
+    # Abstract Method Implementations
+    # -------------------------------------------------------------------------
     
-    async def _call_llm(
+    def get_system_prompt(self) -> str:
+        """Get the system prompt for this orchestrator agent."""
+        return INVENTORY_MANAGER_SYSTEM_PROMPT
+    
+    async def make_strategic_decision(
         self,
-        system_prompt: str,
-        user_message: str,
-        temperature: Optional[float] = None,
-    ) -> "_LLMResponse":
-        """Make an LLM call with tracking.
+        context: AgentContext,
+        decision_request: str,
+    ) -> StrategicDecision:
+        """Make a strategic decision using Opus.
         
         Args:
-            system_prompt: System prompt for the LLM
-            user_message: User message/query
-            temperature: Override default temperature
+            context: Current agent context
+            decision_request: Description of the decision needed
             
         Returns:
-            _LLMResponse with content and metadata
+            StrategicDecision with action and reasoning
         """
-        import time
-        
-        start = time.time()
-        
-        response = self.client.messages.create(
+        response = await self.client.messages.create(
             model=self.model,
-            max_tokens=self.max_tokens,
-            temperature=temperature or self.temperature,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_message}],
+            max_tokens=4096,
+            system=self.get_system_prompt(),
+            messages=[{"role": "user", "content": decision_request}],
         )
         
-        latency_ms = (time.time() - start) * 1000
+        raw_response = response.content[0].text
         
-        # Track metrics
-        self._total_input_tokens += response.usage.input_tokens
-        self._total_output_tokens += response.usage.output_tokens
-        self._total_requests += 1
+        # Parse response
+        try:
+            json_match = re.search(r'\{[\s\S]*\}', raw_response)
+            if json_match:
+                data = json.loads(json_match.group())
+                return StrategicDecision(
+                    decision_type=data.get("decision_type", "general"),
+                    description=data.get("description", decision_request),
+                    rationale=data.get("rationale", raw_response),
+                    impact=data.get("impact", {}),
+                )
+        except (json.JSONDecodeError, KeyError):
+            pass
         
-        return _LLMResponse(
-            content=response.content[0].text,
-            input_tokens=response.usage.input_tokens,
-            output_tokens=response.usage.output_tokens,
-            latency_ms=latency_ms,
+        return StrategicDecision(
+            decision_type="general",
+            description=decision_request,
+            rationale=raw_response,
+            impact={},
         )
     
-    def register_specialist(self, channel: str, specialist: Any) -> None:
-        """Register an L2 channel specialist.
+    async def plan_specialist_assignments(
+        self,
+        context: AgentContext,
+        campaign: CampaignState,
+    ) -> list[SpecialistAssignment]:
+        """Plan assignments to L2 channel specialists for inventory management.
         
         Args:
-            channel: Channel identifier (e.g., "display", "video", "ctv")
-            specialist: L2 specialist agent instance
-        """
-        self._specialists[channel] = specialist
-    
-    async def process_request(self, request: DealRequest) -> DealDecision:
-        """Process an incoming deal request.
-        
-        This is the main entry point for deal requests.
-        
-        Args:
-            request: Incoming deal request
+            context: Current agent context
+            campaign: Campaign state (maps to deal/inventory request)
             
         Returns:
-            Decision on the deal (accept/reject/counter)
+            List of specialist assignments
         """
-        return await self.evaluate_deal_request(request)
+        assignments = []
+        
+        # For seller agents, we assign based on channel inventory needs
+        for channel, specialist_id in self._channel_specialists.items():
+            if campaign.budget_remaining > 0:
+                allocation = campaign.budget_remaining * 0.2  # Distribute across channels
+                assignments.append(
+                    SpecialistAssignment(
+                        specialist_id=specialist_id,
+                        channel=channel,
+                        objective=f"Manage {channel} inventory for request {campaign.campaign_id}",
+                        context_items={
+                            "campaign_id": campaign.campaign_id,
+                            "budget": allocation,
+                        },
+                        priority=ContextPriority.HIGH,
+                        budget_allocation=allocation,
+                    )
+                )
+        
+        return assignments
+    
+    # -------------------------------------------------------------------------
+    # Deal Evaluation
+    # -------------------------------------------------------------------------
     
     async def evaluate_deal_request(self, request: DealRequest) -> DealDecision:
         """Strategic decision: accept, reject, or counter a deal request.
@@ -287,34 +262,44 @@ class InventoryManager(OrchestratorAgent):
             daily_avails=product.daily_impressions,
             committed_impressions=committed_imps,
             tier_discount=TIER_DISCOUNTS.get(request.buyer_tier, 0),
-            market_conditions="Normal demand",  # TODO: Dynamic market conditions
+            market_conditions="Normal demand",
             revenue_ytd=self._portfolio.revenue_ytd,
         )
         
         # Call LLM
-        response = await self._call_llm(
-            system_prompt=INVENTORY_MANAGER_SYSTEM_PROMPT,
-            user_message=prompt,
+        import time
+        start = time.time()
+        response = await self.client.messages.create(
+            model=self.model,
+            max_tokens=4096,
+            system=self.get_system_prompt(),
+            messages=[{"role": "user", "content": prompt}],
         )
+        latency_ms = (time.time() - start) * 1000
         
         # Parse response
-        decision = self._parse_deal_decision(request.request_id, response.content)
+        decision = self._parse_deal_decision(request.request_id, response.content[0].text)
         decision.model_used = self.model
-        decision.latency_ms = response.latency_ms
+        decision.latency_ms = latency_ms
         
-        # Record in context
-        self._context.record_decision(
-            action=f"deal_evaluation:{decision.action.value}",
-            reasoning=decision.reasoning,
-            data={
+        # Record decision
+        self._decision_history.append({
+            "action": f"deal_evaluation:{decision.action.value}",
+            "reasoning": decision.reasoning,
+            "data": {
                 "request_id": request.request_id,
                 "buyer_id": request.buyer_id,
                 "offered_cpm": request.max_cpm,
                 "decided_cpm": decision.price,
             },
-        )
+            "timestamp": datetime.utcnow().isoformat(),
+        })
         
         return decision
+    
+    # -------------------------------------------------------------------------
+    # Yield Optimization
+    # -------------------------------------------------------------------------
     
     async def optimize_yield(self, portfolio: Optional[InventoryPortfolio] = None) -> YieldStrategy:
         """Optimize pricing and allocation across the inventory portfolio.
@@ -342,7 +327,7 @@ class InventoryManager(OrchestratorAgent):
             channel_breakdown=channel_breakdown,
             avg_fill_rate=avg_fill,
             avg_cpm=avg_cpm,
-            revenue_mtd=portfolio.revenue_ytd * 0.1,  # Simplified
+            revenue_mtd=portfolio.revenue_ytd * 0.1,
             revenue_target=portfolio.revenue_ytd * 0.12,
             variance=(0.1 / 0.12 - 1) * 100,
             recent_deals=self._format_recent_deals(),
@@ -351,25 +336,32 @@ class InventoryManager(OrchestratorAgent):
             demand_signals="Steady demand across channels",
         )
         
-        response = await self._call_llm(
-            system_prompt=INVENTORY_MANAGER_SYSTEM_PROMPT,
-            user_message=prompt,
+        response = await self.client.messages.create(
+            model=self.model,
+            max_tokens=4096,
+            system=self.get_system_prompt(),
+            messages=[{"role": "user", "content": prompt}],
         )
         
-        strategy = self._parse_yield_strategy(response.content)
+        strategy = self._parse_yield_strategy(response.content[0].text)
         strategy.model_used = self.model
         
         # Record decision
-        self._context.record_decision(
-            action="yield_optimization",
-            reasoning=f"Generated yield strategy with {len(strategy.floor_adjustments)} adjustments",
-            data={
+        self._decision_history.append({
+            "action": "yield_optimization",
+            "reasoning": f"Generated yield strategy with {len(strategy.floor_adjustments)} adjustments",
+            "data": {
                 "expected_lift": strategy.expected_revenue_lift,
                 "adjustments_count": len(strategy.floor_adjustments),
             },
-        )
+            "timestamp": datetime.utcnow().isoformat(),
+        })
         
         return strategy
+    
+    # -------------------------------------------------------------------------
+    # Cross-Sell
+    # -------------------------------------------------------------------------
     
     async def identify_cross_sell(self, deal: Deal) -> list[CrossSellOpportunity]:
         """Find upsell/cross-sell opportunities from an existing deal.
@@ -385,7 +377,10 @@ class InventoryManager(OrchestratorAgent):
         """
         # Get buyer history
         buyer_deals = [d for d in self._active_deals.values() if d.buyer_id == deal.buyer_id]
-        channels_used = list(set(d.product_id.split("-")[1] if "-" in d.product_id else "unknown" for d in buyer_deals))
+        channels_used = list(set(
+            d.product_id.split("-")[1] if "-" in d.product_id else "unknown"
+            for d in buyer_deals
+        ))
         avg_cpm = sum(d.agreed_cpm for d in buyer_deals) / max(len(buyer_deals), 1)
         lifetime_value = sum(d.agreed_cpm * d.impressions / 1000 for d in buyer_deals)
         
@@ -402,7 +397,7 @@ class InventoryManager(OrchestratorAgent):
             impressions=deal.impressions,
             start_date=deal.flight_dates[0].isoformat(),
             end_date=deal.flight_dates[1].isoformat(),
-            audience_spec="{}",  # Simplified
+            audience_spec="{}",
             deal_count=len(buyer_deals),
             channels_used=", ".join(channels_used) or "None",
             avg_cpm_paid=avg_cpm,
@@ -410,41 +405,31 @@ class InventoryManager(OrchestratorAgent):
             available_inventory=available_inventory,
         )
         
-        response = await self._call_llm(
-            system_prompt=INVENTORY_MANAGER_SYSTEM_PROMPT,
-            user_message=prompt,
+        response = await self.client.messages.create(
+            model=self.model,
+            max_tokens=4096,
+            system=self.get_system_prompt(),
+            messages=[{"role": "user", "content": prompt}],
         )
         
-        opportunities = self._parse_cross_sell_opportunities(deal.deal_id, response.content)
+        opportunities = self._parse_cross_sell_opportunities(deal.deal_id, response.content[0].text)
         
         # Record
-        self._context.record_decision(
-            action="cross_sell_identification",
-            reasoning=f"Found {len(opportunities)} cross-sell opportunities",
-            data={
+        self._decision_history.append({
+            "action": "cross_sell_identification",
+            "reasoning": f"Found {len(opportunities)} cross-sell opportunities",
+            "data": {
                 "source_deal": deal.deal_id,
                 "opportunities_count": len(opportunities),
             },
-        )
+            "timestamp": datetime.utcnow().isoformat(),
+        })
         
         return opportunities
     
-    async def delegate_to_specialist(
-        self,
-        specialist: str,
-        task: Task,
-    ) -> TaskResult:
-        """Delegate work to an L2 channel inventory specialist.
-        
-        Args:
-            specialist: Channel identifier (display, video, ctv, etc.)
-            task: Task to delegate
-            
-        Returns:
-            Result from the specialist
-        """
-        # Alias for delegate_to_channel
-        return await self.delegate_to_channel(specialist, task)
+    # -------------------------------------------------------------------------
+    # Delegation
+    # -------------------------------------------------------------------------
     
     async def delegate_to_channel(self, channel: str, task: Task) -> TaskResult:
         """Pass work to the appropriate L2 channel inventory agent.
@@ -456,17 +441,15 @@ class InventoryManager(OrchestratorAgent):
         Returns:
             Result from the channel specialist
         """
-        specialist = self._specialists.get(channel)
+        specialist = self.get_specialist_for_channel(channel)
         
         if specialist is None:
-            # No specialist registered - return error result
             return TaskResult(
                 task_id=task.task_id,
                 success=False,
                 error=f"No L2 specialist registered for channel: {channel}",
             )
         
-        # Delegate to specialist (assumes specialist has a process_task method)
         try:
             if hasattr(specialist, "process_task"):
                 result = await specialist.process_task(task)
@@ -487,6 +470,10 @@ class InventoryManager(OrchestratorAgent):
                 success=False,
                 error=str(e),
             )
+    
+    # -------------------------------------------------------------------------
+    # Deal Management
+    # -------------------------------------------------------------------------
     
     def add_deal(self, deal: Deal) -> None:
         """Add an active deal to tracking."""
@@ -555,9 +542,10 @@ class InventoryManager(OrchestratorAgent):
     def _format_available_inventory(self) -> str:
         """Format available inventory for cross-sell prompts."""
         lines = []
-        for product in self._portfolio.products[:10]:  # Limit to 10
+        for product in self._portfolio.products[:10]:
             lines.append(
-                f"- {product.product_id}: {product.name} ({product.channel.value if isinstance(product.channel, ChannelType) else product.channel}), "
+                f"- {product.product_id}: {product.name} "
+                f"({product.channel.value if isinstance(product.channel, ChannelType) else product.channel}), "
                 f"${product.base_cpm:.2f} CPM, {product.daily_impressions:,} daily imps"
             )
         return "\n".join(lines) if lines else "No inventory available"
@@ -565,7 +553,6 @@ class InventoryManager(OrchestratorAgent):
     def _parse_deal_decision(self, request_id: str, llm_response: str) -> DealDecision:
         """Parse LLM response into a DealDecision."""
         try:
-            # Try to extract JSON from response
             json_match = re.search(r'\{[\s\S]*\}', llm_response)
             if json_match:
                 data = json.loads(json_match.group())
@@ -592,10 +579,9 @@ class InventoryManager(OrchestratorAgent):
                     counter_offer=counter_offer,
                     confidence=data.get("confidence", 0.5),
                 )
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
+        except (json.JSONDecodeError, KeyError, ValueError):
             pass
         
-        # Fallback: reject with parse error
         return DealDecision(
             request_id=request_id,
             action=DealAction.REJECT,
@@ -624,7 +610,6 @@ class InventoryManager(OrchestratorAgent):
         except (json.JSONDecodeError, KeyError, ValueError):
             pass
         
-        # Fallback: empty strategy
         return YieldStrategy(
             insights=["Failed to parse optimization response"],
             confidence=0.0,
@@ -653,7 +638,7 @@ class InventoryManager(OrchestratorAgent):
                     opportunities.append(
                         CrossSellOpportunity(
                             source_deal_id=source_deal_id,
-                            source_product_id="",  # Would need deal context
+                            source_product_id="",
                             recommended_product_id=opp.get("recommended_product_id", ""),
                             recommended_channel=channel,
                             estimated_value=opp.get("estimated_value", 0.0),
@@ -673,23 +658,25 @@ class InventoryManager(OrchestratorAgent):
 async def create_inventory_manager(
     seller_id: str,
     portfolio: Optional[InventoryPortfolio] = None,
-    api_key: Optional[str] = None,
-    model: str = "claude-opus-4",
+    anthropic_client: Optional[AsyncAnthropic] = None,
+    model: str = L1_MODEL,
 ) -> InventoryManager:
     """Create an Inventory Manager instance.
     
     Args:
         seller_id: Unique seller identifier
         portfolio: Initial inventory portfolio
-        api_key: Anthropic API key
+        anthropic_client: Anthropic client (optional)
         model: LLM model to use
         
     Returns:
         Initialized InventoryManager
     """
-    return InventoryManager(
+    manager = InventoryManager(
         seller_id=seller_id,
         portfolio=portfolio,
-        api_key=api_key,
+        anthropic_client=anthropic_client,
         model=model,
     )
+    await manager.initialize()
+    return manager

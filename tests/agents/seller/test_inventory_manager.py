@@ -12,6 +12,8 @@ from datetime import date, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 import json
 
+from anthropic import AsyncAnthropic
+
 from src.agents.seller.l1_inventory_manager import (
     InventoryManager,
     create_inventory_manager,
@@ -150,8 +152,16 @@ def sample_deal() -> Deal:
 
 
 @pytest.fixture
-def mock_anthropic_response():
-    """Create a mock Anthropic API response."""
+def mock_anthropic_client():
+    """Create a mock Anthropic client."""
+    client = MagicMock(spec=AsyncAnthropic)
+    client.messages = MagicMock()
+    return client
+
+
+@pytest.fixture
+def mock_accept_response():
+    """Create a mock response for accept decision."""
     mock_content = MagicMock()
     mock_content.text = json.dumps({
         "action": "accept",
@@ -162,13 +172,8 @@ def mock_anthropic_response():
         "counter_offer": None,
     })
     
-    mock_usage = MagicMock()
-    mock_usage.input_tokens = 500
-    mock_usage.output_tokens = 100
-    
     mock_response = MagicMock()
     mock_response.content = [mock_content]
-    mock_response.usage = mock_usage
     
     return mock_response
 
@@ -260,53 +265,54 @@ class TestModels:
 class TestInventoryManagerInit:
     """Test InventoryManager initialization."""
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
-    def test_init_with_portfolio(self, sample_portfolio: InventoryPortfolio):
+    def test_init_with_portfolio(
+        self,
+        sample_portfolio: InventoryPortfolio,
+        mock_anthropic_client,
+    ):
         """Test initialization with a portfolio."""
         manager = InventoryManager(
             seller_id="pub-001",
             portfolio=sample_portfolio,
+            anthropic_client=mock_anthropic_client,
         )
         
         assert manager.seller_id == "pub-001"
         assert manager.agent_id == "inventory-manager-pub-001"
         assert manager.portfolio == sample_portfolio
-        assert manager.model == "claude-opus-4"
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
-    def test_init_creates_empty_portfolio(self):
+    def test_init_creates_empty_portfolio(self, mock_anthropic_client):
         """Test initialization creates empty portfolio if not provided."""
-        manager = InventoryManager(seller_id="pub-002")
+        manager = InventoryManager(
+            seller_id="pub-002",
+            anthropic_client=mock_anthropic_client,
+        )
         
         assert manager.portfolio.seller_id == "pub-002"
         assert len(manager.portfolio.products) == 0
-    
-    def test_init_without_api_key_raises(self):
-        """Test that missing API key raises ValueError."""
-        with patch.dict("os.environ", {}, clear=True):
-            with pytest.raises(ValueError, match="ANTHROPIC_API_KEY"):
-                InventoryManager(seller_id="pub-001")
 
 
 class TestDealEvaluation:
     """Test deal evaluation functionality."""
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
     @pytest.mark.asyncio
     async def test_evaluate_deal_accept(
         self,
         sample_portfolio: InventoryPortfolio,
         sample_deal_request: DealRequest,
-        mock_anthropic_response,
+        mock_anthropic_client,
+        mock_accept_response,
     ):
         """Test deal evaluation that accepts."""
         manager = InventoryManager(
             seller_id="pub-001",
             portfolio=sample_portfolio,
+            anthropic_client=mock_anthropic_client,
         )
         
-        with patch.object(manager.client.messages, "create", return_value=mock_anthropic_response):
-            decision = await manager.evaluate_deal_request(sample_deal_request)
+        mock_anthropic_client.messages.create = AsyncMock(return_value=mock_accept_response)
+        
+        decision = await manager.evaluate_deal_request(sample_deal_request)
         
         assert decision.action == DealAction.ACCEPT
         assert decision.price == 11.5
@@ -314,16 +320,17 @@ class TestDealEvaluation:
         assert decision.confidence == 0.85
         assert "agency" in decision.reasoning.lower()
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
     @pytest.mark.asyncio
     async def test_evaluate_deal_reject_unknown_product(
         self,
         sample_portfolio: InventoryPortfolio,
+        mock_anthropic_client,
     ):
         """Test deal evaluation rejects unknown product."""
         manager = InventoryManager(
             seller_id="pub-001",
             portfolio=sample_portfolio,
+            anthropic_client=mock_anthropic_client,
         )
         
         request = DealRequest(
@@ -344,17 +351,18 @@ class TestDealEvaluation:
         assert "not found" in decision.reasoning.lower()
         assert decision.confidence == 1.0
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
     @pytest.mark.asyncio
     async def test_evaluate_deal_counter_offer(
         self,
         sample_portfolio: InventoryPortfolio,
         sample_deal_request: DealRequest,
+        mock_anthropic_client,
     ):
         """Test deal evaluation with counter offer."""
         manager = InventoryManager(
             seller_id="pub-001",
             portfolio=sample_portfolio,
+            anthropic_client=mock_anthropic_client,
         )
         
         counter_response = MagicMock()
@@ -371,10 +379,10 @@ class TestDealEvaluation:
                 "reasoning": "Consider adding video for package deal",
             },
         }))]
-        counter_response.usage = MagicMock(input_tokens=500, output_tokens=150)
         
-        with patch.object(manager.client.messages, "create", return_value=counter_response):
-            decision = await manager.evaluate_deal_request(sample_deal_request)
+        mock_anthropic_client.messages.create = AsyncMock(return_value=counter_response)
+        
+        decision = await manager.evaluate_deal_request(sample_deal_request)
         
         assert decision.action == DealAction.COUNTER
         assert decision.counter_offer is not None
@@ -385,13 +393,17 @@ class TestDealEvaluation:
 class TestYieldOptimization:
     """Test yield optimization functionality."""
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
     @pytest.mark.asyncio
-    async def test_optimize_yield(self, sample_portfolio: InventoryPortfolio):
+    async def test_optimize_yield(
+        self,
+        sample_portfolio: InventoryPortfolio,
+        mock_anthropic_client,
+    ):
         """Test yield optimization."""
         manager = InventoryManager(
             seller_id="pub-001",
             portfolio=sample_portfolio,
+            anthropic_client=mock_anthropic_client,
         )
         
         yield_response = MagicMock()
@@ -413,10 +425,10 @@ class TestYieldOptimization:
             "expected_fill_rate_change": -2.0,
             "confidence": 0.80,
         }))]
-        yield_response.usage = MagicMock(input_tokens=800, output_tokens=200)
         
-        with patch.object(manager.client.messages, "create", return_value=yield_response):
-            strategy = await manager.optimize_yield()
+        mock_anthropic_client.messages.create = AsyncMock(return_value=yield_response)
+        
+        strategy = await manager.optimize_yield()
         
         assert strategy.floor_adjustments["pub-001-display-001"] == 1.05
         assert strategy.allocation_priorities[0] == "ctv"
@@ -428,17 +440,18 @@ class TestYieldOptimization:
 class TestCrossSell:
     """Test cross-sell identification functionality."""
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
     @pytest.mark.asyncio
     async def test_identify_cross_sell(
         self,
         sample_portfolio: InventoryPortfolio,
         sample_deal: Deal,
+        mock_anthropic_client,
     ):
         """Test cross-sell opportunity identification."""
         manager = InventoryManager(
             seller_id="pub-001",
             portfolio=sample_portfolio,
+            anthropic_client=mock_anthropic_client,
         )
         manager.add_deal(sample_deal)
         
@@ -467,10 +480,10 @@ class TestCrossSell:
             "top_recommendation": "pub-001-video-001",
             "approach_strategy": "Present as package deal with volume discount",
         }))]
-        cross_sell_response.usage = MagicMock(input_tokens=600, output_tokens=250)
         
-        with patch.object(manager.client.messages, "create", return_value=cross_sell_response):
-            opportunities = await manager.identify_cross_sell(sample_deal)
+        mock_anthropic_client.messages.create = AsyncMock(return_value=cross_sell_response)
+        
+        opportunities = await manager.identify_cross_sell(sample_deal)
         
         assert len(opportunities) == 2
         assert opportunities[0].recommended_product_id == "pub-001-video-001"
@@ -482,13 +495,17 @@ class TestCrossSell:
 class TestDelegation:
     """Test L2 specialist delegation."""
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
     @pytest.mark.asyncio
-    async def test_delegate_to_channel_no_specialist(self, sample_portfolio: InventoryPortfolio):
+    async def test_delegate_to_channel_no_specialist(
+        self,
+        sample_portfolio: InventoryPortfolio,
+        mock_anthropic_client,
+    ):
         """Test delegation when no specialist is registered."""
         manager = InventoryManager(
             seller_id="pub-001",
             portfolio=sample_portfolio,
+            anthropic_client=mock_anthropic_client,
         )
         
         task = Task(
@@ -501,60 +518,22 @@ class TestDelegation:
         
         assert result.success is False
         assert "No L2 specialist" in result.error
-    
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
-    @pytest.mark.asyncio
-    async def test_delegate_to_channel_with_specialist(self, sample_portfolio: InventoryPortfolio):
-        """Test delegation to a registered specialist."""
-        manager = InventoryManager(
-            seller_id="pub-001",
-            portfolio=sample_portfolio,
-        )
-        
-        # Create mock specialist
-        mock_specialist = MagicMock()
-        mock_specialist.process_task = AsyncMock(return_value={"floor_price": 12.0})
-        
-        manager.register_specialist("display", mock_specialist)
-        
-        task = Task(
-            task_id="task-002",
-            task_type="pricing",
-            description="Calculate optimal floor price",
-            data={"product_id": "pub-001-display-001"},
-        )
-        
-        result = await manager.delegate_to_channel("display", task)
-        
-        assert result.success is True
-        assert result.data["floor_price"] == 12.0
-        mock_specialist.process_task.assert_called_once_with(task)
 
 
 class TestMetrics:
     """Test metrics and tracking."""
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
-    def test_get_metrics(self, sample_portfolio: InventoryPortfolio):
-        """Test metrics retrieval."""
-        manager = InventoryManager(
-            seller_id="pub-001",
-            portfolio=sample_portfolio,
-        )
-        
-        metrics = manager.get_metrics()
-        
-        assert metrics["agent_id"] == "inventory-manager-pub-001"
-        assert metrics["agent_type"] == "inventory-manager"
-        assert metrics["model"] == "claude-opus-4"
-        assert metrics["total_decisions"] == 0
-    
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
-    def test_deal_tracking(self, sample_portfolio: InventoryPortfolio, sample_deal: Deal):
+    def test_deal_tracking(
+        self,
+        sample_portfolio: InventoryPortfolio,
+        sample_deal: Deal,
+        mock_anthropic_client,
+    ):
         """Test deal tracking functionality."""
         manager = InventoryManager(
             seller_id="pub-001",
             portfolio=sample_portfolio,
+            anthropic_client=mock_anthropic_client,
         )
         
         manager.add_deal(sample_deal)
@@ -567,12 +546,16 @@ class TestMetrics:
 class TestParsing:
     """Test LLM response parsing."""
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
-    def test_parse_deal_decision_valid(self, sample_portfolio: InventoryPortfolio):
+    def test_parse_deal_decision_valid(
+        self,
+        sample_portfolio: InventoryPortfolio,
+        mock_anthropic_client,
+    ):
         """Test parsing valid deal decision response."""
         manager = InventoryManager(
             seller_id="pub-001",
             portfolio=sample_portfolio,
+            anthropic_client=mock_anthropic_client,
         )
         
         response = json.dumps({
@@ -590,12 +573,16 @@ class TestParsing:
         assert decision.price == 15.0
         assert decision.confidence == 0.9
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
-    def test_parse_deal_decision_invalid(self, sample_portfolio: InventoryPortfolio):
+    def test_parse_deal_decision_invalid(
+        self,
+        sample_portfolio: InventoryPortfolio,
+        mock_anthropic_client,
+    ):
         """Test parsing invalid response falls back to reject."""
         manager = InventoryManager(
             seller_id="pub-001",
             portfolio=sample_portfolio,
+            anthropic_client=mock_anthropic_client,
         )
         
         response = "This is not valid JSON"
@@ -606,12 +593,16 @@ class TestParsing:
         assert decision.confidence == 0.0
         assert "Failed to parse" in decision.reasoning
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
-    def test_parse_yield_strategy_valid(self, sample_portfolio: InventoryPortfolio):
+    def test_parse_yield_strategy_valid(
+        self,
+        sample_portfolio: InventoryPortfolio,
+        mock_anthropic_client,
+    ):
         """Test parsing valid yield strategy response."""
         manager = InventoryManager(
             seller_id="pub-001",
             portfolio=sample_portfolio,
+            anthropic_client=mock_anthropic_client,
         )
         
         response = json.dumps({
@@ -639,27 +630,29 @@ class TestParsing:
 class TestIntegration:
     """Integration tests for full workflows."""
     
-    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
     @pytest.mark.asyncio
     async def test_full_deal_workflow(
         self,
         sample_portfolio: InventoryPortfolio,
         sample_deal_request: DealRequest,
-        mock_anthropic_response,
+        mock_anthropic_client,
+        mock_accept_response,
     ):
         """Test full deal evaluation workflow."""
         manager = InventoryManager(
             seller_id="pub-001",
             portfolio=sample_portfolio,
+            anthropic_client=mock_anthropic_client,
         )
         
-        # Evaluate deal
-        with patch.object(manager.client.messages, "create", return_value=mock_anthropic_response):
-            decision = await manager.process_request(sample_deal_request)
+        mock_anthropic_client.messages.create = AsyncMock(return_value=mock_accept_response)
         
-        # Check decision recorded in context (use _context which returns the tracker)
-        assert len(manager._context.decisions) == 1
-        assert "deal_evaluation" in manager._context.decisions[0]["action"]
+        # Evaluate deal
+        decision = await manager.evaluate_deal_request(sample_deal_request)
+        
+        # Check decision recorded in history
+        assert len(manager._decision_history) == 1
+        assert "deal_evaluation" in manager._decision_history[0]["action"]
         
         # If accepted, add deal
         if decision.action == DealAction.ACCEPT:

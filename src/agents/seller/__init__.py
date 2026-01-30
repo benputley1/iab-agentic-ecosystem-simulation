@@ -12,7 +12,6 @@ This module provides:
   - CTVInventoryAgent: Connected TV inventory
   - MobileAppInventoryAgent: Mobile app inventory
   - NativeInventoryAgent: Native ad inventory
-- L3 Functional Agents: Specialized agents for pricing, avails, proposals, etc.
 
 Usage:
     from agents.seller import SellerAgentAdapter, InventoryManager
@@ -29,13 +28,6 @@ Usage:
     
     display_agent = DisplayInventoryAgent(seller_id="pub-001")
     avails = await display_agent.check_availability(request)
-    
-    # L3 Agents
-    from agents.seller import PricingAgent, AvailsAgent
-    from agents.seller.tools import register_tools_for_agent
-    
-    pricing = PricingAgent()
-    register_tools_for_agent(pricing)
 """
 
 from .adapter import SellerAgentAdapter, run_seller_agent
@@ -48,24 +40,6 @@ from .l2_video import VideoInventoryAgent
 from .l2_ctv import CTVInventoryAgent
 from .l2_mobile import MobileAppInventoryAgent
 from .l2_native import NativeInventoryAgent
-
-# L3 Functional Agents
-from .l3_pricing import PricingAgent, BuyerContext, Price
-from .l3_avails import AvailsAgent, DateRange, AvailsResult, Forecast, Allocation
-from .l3_proposal_review import (
-    ProposalReviewAgent, 
-    Proposal, 
-    ProposalStatus, 
-    ReviewResult,
-    CounterOffer as L3CounterOffer,
-)
-from .l3_upsell import UpsellAgent, Deal as L3Deal, Opportunity, Bundle
-from .l3_audience_validator import (
-    AudienceValidatorAgent, 
-    AudienceSpec as L3AudienceSpec, 
-    ValidationResult, 
-    Coverage,
-)
 
 from .models import (
     AudienceSpec,
@@ -103,30 +77,7 @@ __all__ = [
     "CTVInventoryAgent",
     "MobileAppInventoryAgent",
     "NativeInventoryAgent",
-    # L3 Functional Agents
-    "PricingAgent",
-    "AvailsAgent",
-    "ProposalReviewAgent",
-    "UpsellAgent",
-    "AudienceValidatorAgent",
-    # L3 Data Types
-    "BuyerContext",
-    "Price",
-    "DateRange",
-    "AvailsResult",
-    "Forecast",
-    "Allocation",
-    "Proposal",
-    "ProposalStatus",
-    "ReviewResult",
-    "L3CounterOffer",
-    "L3Deal",
-    "Opportunity",
-    "Bundle",
-    "L3AudienceSpec",
-    "ValidationResult",
-    "Coverage",
-    # Models (from models.py)
+    # Models
     "AudienceSpec",
     "BuyerTier",
     "ChannelType",
