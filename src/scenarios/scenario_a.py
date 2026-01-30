@@ -4,13 +4,26 @@ Scenario A: Current State with Rent-Seeking Exchange.
 Models today's programmatic ecosystem with exchange intermediaries
 that extract 10-20% fees (default 15%) from every transaction.
 
+IMPORTANT (v2 update): Buyer and seller agents in this scenario ALSO
+experience context rot, just like in Scenario B. The key difference is:
+- Exchange provides partial state verification via transaction logs
+- Exchange catches ~60% of agent errors through reconciliation
+- But fees are charged for this intermediary service (15%)
+
+This models reality where:
+- DSPs use AI/ML for bidding decisions (subject to context limits)
+- SSPs use AI/ML for floor price optimization (subject to context limits)
+- Exchange provides SOME verification but not agent memory
+- Discrepancies still occur, but exchange can arbitrate
+
 Flow:
-1. Buyer agents submit bid requests
-2. Exchange receives and forwards to sellers
-3. Sellers respond with offers
-4. Exchange runs second-price auction
-5. Exchange extracts fee and creates deal
-6. Marked-up price passed to buyer
+1. Buyer agents submit bid requests (may have corrupted context)
+2. Exchange receives, validates, and forwards to sellers
+3. Sellers respond with offers (may have corrupted context)
+4. Exchange runs second-price auction + validates data
+5. Exchange catches some hallucinated data via its records
+6. Exchange extracts fee and creates deal
+7. Marked-up price passed to buyer
 """
 
 import asyncio
@@ -19,10 +32,18 @@ from typing import Optional
 import structlog
 
 from .base import BaseScenario, ScenarioConfig, ScenarioMetrics
+from .context_rot import (
+    ContextRotSimulator,
+    ContextRotConfig,
+    AgentMemory,
+    RecoverySource,
+    SCENARIO_A_ROT_CONFIG,
+)
 from ..agents.buyer.wrapper import BuyerAgentWrapper, Campaign, BidStrategy
 from ..agents.seller.adapter import SellerAgentAdapter
 from ..agents.exchange.auction import RentSeekingExchange
 from ..agents.exchange.fees import FeeConfig
+from ..agents.ucp.hallucination import HallucinationManager
 from ..infrastructure.redis_bus import RedisBus, create_redis_bus
 from ..infrastructure.message_schemas import (
     BidRequest,
@@ -44,12 +65,18 @@ class ScenarioA(BaseScenario):
     where exchanges act as intermediaries and extract significant fees
     (typically 10-20%) from every transaction.
 
+    UPDATED (v2): Now includes context rot simulation for buyer/seller agents.
+    The exchange provides partial recovery through transaction log verification,
+    catching approximately 60% of agent errors.
+
     Key characteristics:
     - Exchange mediates all buyer-seller communication
     - Second-price auction determines winner
     - Exchange extracts configurable fee (default 15%)
     - Buyer sees marked-up price
     - Seller receives price minus fee
+    - **Agents experience context rot (new in v2)**
+    - **Exchange catches ~60% of errors via verification (new in v2)**
     """
 
     def __init__(
@@ -57,6 +84,8 @@ class ScenarioA(BaseScenario):
         config: Optional[ScenarioConfig] = None,
         redis_bus: Optional[RedisBus] = None,
         fee_pct: Optional[float] = None,
+        context_rot_config: Optional[ContextRotConfig] = None,
+        seed: Optional[int] = None,
     ):
         """
         Initialize Scenario A.
@@ -65,6 +94,8 @@ class ScenarioA(BaseScenario):
             config: Scenario configuration
             redis_bus: Optional pre-configured Redis bus
             fee_pct: Override fee percentage (default: config.exchange_fee_pct)
+            context_rot_config: Configuration for context rot simulation
+            seed: Random seed for reproducibility
         """
         config = config or ScenarioConfig()
         super().__init__(
@@ -77,6 +108,24 @@ class ScenarioA(BaseScenario):
         # Fee configuration
         self.fee_pct = fee_pct or config.exchange_fee_pct
         self.fee_config = FeeConfig(base_fee_pct=self.fee_pct)
+
+        # Context rot simulation (v2 addition)
+        # Exchange provides ~60% recovery via transaction log verification
+        self._context_rot = ContextRotSimulator(
+            context_rot_config or SCENARIO_A_ROT_CONFIG,
+            seed=seed,
+        )
+        
+        # Agent memories (subject to context rot)
+        self._buyer_memories: dict[str, AgentMemory] = {}
+        self._seller_memories: dict[str, AgentMemory] = {}
+        
+        # Hallucination tracking (agents may have corrupted data)
+        # But exchange catches some via verification
+        self._hallucination_mgr = HallucinationManager(
+            scenario="A",
+            injection_rate=config.hallucination_rate * 0.4,  # Lower rate due to exchange validation
+        )
 
         # Agents (initialized in setup)
         self._buyers: list[BuyerAgentWrapper] = []
@@ -187,16 +236,123 @@ class ScenarioA(BaseScenario):
             )
             buyer.add_campaign(campaign)
 
+    def get_or_create_buyer_memory(self, buyer_id: str) -> AgentMemory:
+        """Get or create memory for a buyer agent."""
+        if buyer_id not in self._buyer_memories:
+            self._buyer_memories[buyer_id] = AgentMemory(
+                agent_id=buyer_id,
+                agent_type="buyer",
+            )
+        return self._buyer_memories[buyer_id]
+
+    def get_or_create_seller_memory(self, seller_id: str) -> AgentMemory:
+        """Get or create memory for a seller agent."""
+        if seller_id not in self._seller_memories:
+            self._seller_memories[seller_id] = AgentMemory(
+                agent_id=seller_id,
+                agent_type="seller",
+            )
+        return self._seller_memories[seller_id]
+
+    async def apply_daily_context_rot(self) -> dict[str, int]:
+        """
+        Apply context rot to all agent memories at end of day.
+        
+        In Scenario A, exchange provides ~60% recovery via transaction logs,
+        so net context loss is lower than Scenario B.
+
+        Returns:
+            Dict mapping agent_id to net_keys_lost count
+        """
+        results = {}
+
+        # Apply to buyers
+        for buyer_id, memory in self._buyer_memories.items():
+            # Check for restart first
+            restart_event = self._context_rot.check_restart(memory, self.current_day)
+            if restart_event:
+                net_loss = restart_event.keys_lost - restart_event.keys_recovered
+                results[buyer_id] = net_loss
+                await self.record_context_rot(
+                    agent_id=buyer_id,
+                    keys_lost=restart_event.keys_lost,
+                    is_decay=False,
+                    agent_type="buyer",
+                    recovery_attempted=restart_event.recovery_attempted,
+                    recovery_successful=restart_event.recovery_successful,
+                    recovery_accuracy=restart_event.recovery_accuracy,
+                    recovery_source=restart_event.recovery_source.value,
+                )
+            else:
+                # Apply gradual decay
+                decay_event = self._context_rot.apply_daily_decay(
+                    memory, self.current_day
+                )
+                if decay_event.keys_lost > 0:
+                    net_loss = decay_event.keys_lost - decay_event.keys_recovered
+                    results[buyer_id] = net_loss
+                    await self.record_context_rot(
+                        agent_id=buyer_id,
+                        keys_lost=decay_event.keys_lost,
+                        is_decay=True,
+                        agent_type="buyer",
+                        keys_lost_names=decay_event.keys_lost_names,
+                        recovery_attempted=decay_event.recovery_attempted,
+                        recovery_successful=decay_event.recovery_successful,
+                        recovery_accuracy=decay_event.recovery_accuracy,
+                        recovery_source=decay_event.recovery_source.value,
+                    )
+
+        # Apply to sellers
+        for seller_id, memory in self._seller_memories.items():
+            restart_event = self._context_rot.check_restart(memory, self.current_day)
+            if restart_event:
+                net_loss = restart_event.keys_lost - restart_event.keys_recovered
+                results[seller_id] = net_loss
+                await self.record_context_rot(
+                    agent_id=seller_id,
+                    keys_lost=restart_event.keys_lost,
+                    is_decay=False,
+                    agent_type="seller",
+                    recovery_attempted=restart_event.recovery_attempted,
+                    recovery_successful=restart_event.recovery_successful,
+                    recovery_accuracy=restart_event.recovery_accuracy,
+                    recovery_source=restart_event.recovery_source.value,
+                )
+            else:
+                decay_event = self._context_rot.apply_daily_decay(
+                    memory, self.current_day
+                )
+                if decay_event.keys_lost > 0:
+                    net_loss = decay_event.keys_lost - decay_event.keys_recovered
+                    results[seller_id] = net_loss
+                    await self.record_context_rot(
+                        agent_id=seller_id,
+                        keys_lost=decay_event.keys_lost,
+                        is_decay=True,
+                        agent_type="seller",
+                        keys_lost_names=decay_event.keys_lost_names,
+                        recovery_attempted=decay_event.recovery_attempted,
+                        recovery_successful=decay_event.recovery_successful,
+                        recovery_accuracy=decay_event.recovery_accuracy,
+                        recovery_source=decay_event.recovery_source.value,
+                    )
+
+        return results
+
     async def run_day(self, day: int) -> list[DealConfirmation]:
         """
         Run one simulation day for Scenario A.
 
         Orchestrates:
-        1. Buyers submit bid requests
-        2. Sellers respond via exchange
-        3. Exchange runs auctions
-        4. Deals are created with fee extraction
+        1. Buyers submit bid requests (may have context rot)
+        2. Sellers respond via exchange (may have context rot)
+        3. Exchange validates and runs auctions
+        4. Exchange catches some errors via transaction logs (~60%)
+        5. Deals are created with fee extraction
+        6. End-of-day context rot applied to all agents
         """
+        self.current_day = day
         deals = []
 
         logger.info(
@@ -273,9 +429,18 @@ class ScenarioA(BaseScenario):
             except asyncio.CancelledError:
                 pass
 
+        # Apply end-of-day context rot to agents
+        rot_results = await self.apply_daily_context_rot()
+        context_rot_events = len([v for v in rot_results.values() if v > 0])
+        net_keys_lost = sum(rot_results.values())
+
         # Log day summary
         day_spend = sum(d.total_cost for d in deals)
         day_fees = sum(d.exchange_fee for d in deals)
+
+        # Update scenario metrics with context rot info
+        self.metrics.context_rot_events += context_rot_events
+        self.metrics.keys_lost_total += net_keys_lost
 
         logger.info(
             "scenario_a.day_complete",
@@ -284,6 +449,9 @@ class ScenarioA(BaseScenario):
             spend=round(day_spend, 2),
             fees=round(day_fees, 2),
             fee_rate=round(day_fees / day_spend * 100, 2) if day_spend > 0 else 0,
+            context_rot_events=context_rot_events,
+            net_keys_lost=net_keys_lost,
+            recovery_source="exchange",
         )
 
         return deals
@@ -330,11 +498,43 @@ class ScenarioA(BaseScenario):
             await seller.disconnect()
         self._sellers.clear()
 
+        # Clear agent memories
+        self._buyer_memories.clear()
+        self._seller_memories.clear()
+
         # Disconnect bus
         await self.disconnect_bus()
 
         # Calculate final metrics
         self._calculate_final_metrics()
+
+    def get_memory_summary(self) -> dict:
+        """Get summary of all agent memories and context rot."""
+        return {
+            "buyers": {
+                agent_id: memory.to_dict()
+                for agent_id, memory in self._buyer_memories.items()
+            },
+            "sellers": {
+                agent_id: memory.to_dict()
+                for agent_id, memory in self._seller_memories.items()
+            },
+            "total_rot_events": sum(
+                m.rot_events for m in self._buyer_memories.values()
+            ) + sum(m.rot_events for m in self._seller_memories.values()),
+            "total_keys_lost": sum(
+                m.keys_lost_total for m in self._buyer_memories.values()
+            ) + sum(m.keys_lost_total for m in self._seller_memories.values()),
+            "total_keys_recovered": sum(
+                m.keys_recovered_total for m in self._buyer_memories.values()
+            ) + sum(m.keys_recovered_total for m in self._seller_memories.values()),
+            "recovery_source": "exchange",
+            "recovery_accuracy": 0.60,  # Exchange catches ~60% of errors
+        }
+
+    def get_context_rot_summary(self) -> dict:
+        """Get context rot simulation summary."""
+        return self._context_rot.get_summary()
 
     def _calculate_final_metrics(self) -> None:
         """Calculate final scenario metrics."""

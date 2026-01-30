@@ -7,19 +7,26 @@ advertising transactions WITHOUT an exchange intermediary.
 Key characteristics:
 - Direct buyer↔seller communication (no exchange)
 - No persistent state across agent restarts
-- Context rot accumulates over simulation days
+- Context rot accumulates over simulation days (NO RECOVERY)
 - No single source of truth for disputes
 - Hallucination risk from stale embeddings
+- 0% fees (no intermediary)
+
+CRITICAL DIFFERENCE FROM SCENARIO A:
+- Scenario A: Agents have context rot BUT exchange provides ~60% recovery
+- Scenario B: Agents have context rot with NO recovery mechanism
+- Both have same base decay rate, but B's errors compound unchecked
 
 This scenario demonstrates the challenges of pure A2A systems:
 1. Context loss leads to repeated negotiations
 2. Agents may "hallucinate" based on corrupted/stale data
 3. No ground truth verification for claims
 4. Performance degrades over 30-day campaigns
+5. Errors compound without exchange verification layer
 
 The Critical Gap (Intentional):
-This scenario explicitly does NOT persist state to highlight
-the value proposition of Scenario C (ledger-backed verification).
+This scenario explicitly does NOT persist state or provide verification
+to highlight the value proposition of Scenario C (ledger-backed verification).
 """
 
 import asyncio
@@ -31,6 +38,13 @@ from collections import defaultdict
 import structlog
 
 from .base import BaseScenario, ScenarioConfig, ScenarioMetrics
+from .context_rot import (
+    ContextRotSimulator,
+    ContextRotConfig,
+    AgentMemory,
+    RecoverySource,
+    SCENARIO_B_ROT_CONFIG,
+)
 from ..infrastructure.redis_bus import RedisBus
 from ..infrastructure.message_schemas import (
     BidRequest,
@@ -48,199 +62,13 @@ from ..metrics.collector import MetricCollector
 logger = structlog.get_logger()
 
 
-@dataclass
-class ContextRotConfig:
-    """Configuration for context rot simulation."""
-
-    # Base decay rate per simulation day (2% default)
-    decay_rate: float = 0.02
-
-    # Probability of full context wipe (agent restart)
-    restart_probability: float = 0.005
-
-    # Maximum memory items an agent can retain
-    max_memory_items: int = 100
-
-    # Days before memory starts decaying (grace period)
-    grace_period_days: int = 3
-
-
-@dataclass
-class AgentMemory:
-    """
-    In-memory state for an agent in Scenario B.
-
-    This memory is volatile and subject to context rot.
-    """
-
-    agent_id: str
-    agent_type: str  # "buyer" or "seller"
-
-    # Transaction history (limited, decaying)
-    deal_history: dict[str, DealConfirmation] = field(default_factory=dict)
-
-    # Negotiation context (ephemeral)
-    pending_requests: dict[str, BidRequest] = field(default_factory=dict)
-    pending_responses: dict[str, BidResponse] = field(default_factory=dict)
-
-    # Partner relationship memory
-    partner_reputation: dict[str, float] = field(default_factory=dict)
-    partner_history: dict[str, list[str]] = field(default_factory=dict)
-
-    # Context rot tracking
-    rot_events: int = 0
-    keys_lost_total: int = 0
-    last_rot_day: int = 0
-
-    def memory_size(self) -> int:
-        """Calculate total memory items."""
-        return (
-            len(self.deal_history)
-            + len(self.pending_requests)
-            + len(self.pending_responses)
-            + len(self.partner_reputation)
-        )
-
-    def to_dict(self) -> dict:
-        """Serialize memory state."""
-        return {
-            "agent_id": self.agent_id,
-            "agent_type": self.agent_type,
-            "deal_count": len(self.deal_history),
-            "pending_requests": len(self.pending_requests),
-            "pending_responses": len(self.pending_responses),
-            "partner_count": len(self.partner_reputation),
-            "rot_events": self.rot_events,
-            "keys_lost_total": self.keys_lost_total,
-        }
-
-
-class ContextRotSimulator:
-    """
-    Simulates context loss over time for Scenario B.
-
-    Models the degradation that occurs when:
-    - Agents are stateless or have limited context windows
-    - No external state persistence exists
-    - Memory compaction or restarts occur
-    """
-
-    def __init__(
-        self,
-        config: Optional[ContextRotConfig] = None,
-        seed: Optional[int] = None,
-    ):
-        self.config = config or ContextRotConfig()
-        self._random = random.Random(seed)
-
-    def apply_daily_decay(
-        self,
-        memory: AgentMemory,
-        simulation_day: int,
-    ) -> tuple[int, list[str]]:
-        """
-        Apply daily context decay to agent memory.
-
-        Probability of losing each memory item increases with:
-        - Number of days passed
-        - Total memory size
-
-        Args:
-            memory: Agent's memory to decay
-            simulation_day: Current simulation day
-
-        Returns:
-            Tuple of (keys_lost_count, list_of_lost_key_names)
-        """
-        # Skip during grace period
-        if simulation_day <= self.config.grace_period_days:
-            return 0, []
-
-        # Calculate survival rate for this day
-        # By day 30: ~55% of original context remains (0.98^30 ≈ 0.545)
-        days_active = simulation_day - self.config.grace_period_days
-        survival_rate = (1 - self.config.decay_rate) ** days_active
-
-        lost_keys = []
-
-        # Decay deal history
-        for deal_id in list(memory.deal_history.keys()):
-            if self._random.random() > survival_rate:
-                del memory.deal_history[deal_id]
-                lost_keys.append(f"deal:{deal_id[:8]}")
-
-        # Decay partner reputation (older relationships decay faster)
-        for partner_id in list(memory.partner_reputation.keys()):
-            # Extra decay for less recent partners
-            if self._random.random() > survival_rate * 0.9:
-                del memory.partner_reputation[partner_id]
-                lost_keys.append(f"reputation:{partner_id[:8]}")
-
-        # Clear stale pending items (aggressive decay)
-        for req_id in list(memory.pending_requests.keys()):
-            if self._random.random() > survival_rate * 0.8:
-                del memory.pending_requests[req_id]
-                lost_keys.append(f"pending:{req_id[:8]}")
-
-        # Update tracking
-        if lost_keys:
-            memory.rot_events += 1
-            memory.keys_lost_total += len(lost_keys)
-            memory.last_rot_day = simulation_day
-
-            logger.warning(
-                "context_rot.decay",
-                agent_id=memory.agent_id,
-                day=simulation_day,
-                keys_lost=len(lost_keys),
-                survival_rate=f"{survival_rate:.2%}",
-            )
-
-        return len(lost_keys), lost_keys
-
-    def check_restart(
-        self,
-        memory: AgentMemory,
-        simulation_day: int,
-    ) -> bool:
-        """
-        Check if agent experiences a restart (full context wipe).
-
-        Simulates scenarios where:
-        - Agent process crashes and restarts
-        - Context window is exceeded and truncated
-        - Session expires
-
-        Args:
-            memory: Agent's memory
-            simulation_day: Current simulation day
-
-        Returns:
-            True if restart occurred (memory was wiped)
-        """
-        # Restart probability increases slightly over time
-        adjusted_prob = self.config.restart_probability * (1 + simulation_day * 0.01)
-
-        if self._random.random() < adjusted_prob:
-            # Full context wipe
-            keys_lost = memory.memory_size()
-            memory.deal_history.clear()
-            memory.pending_requests.clear()
-            memory.pending_responses.clear()
-            memory.partner_reputation.clear()
-            memory.partner_history.clear()
-            memory.rot_events += 1
-            memory.keys_lost_total += keys_lost
-
-            logger.error(
-                "context_rot.restart",
-                agent_id=memory.agent_id,
-                day=simulation_day,
-                keys_lost=keys_lost,
-            )
-            return True
-
-        return False
+# Note: Using shared ContextRotConfig, AgentMemory, and ContextRotSimulator
+# from context_rot.py module. Scenario B uses SCENARIO_B_ROT_CONFIG which
+# has recovery_source=NONE and recovery_accuracy=0.0 (no recovery).
+#
+# The key difference from Scenario A:
+# - Scenario A: Same context rot but exchange provides ~60% recovery
+# - Scenario B: Same context rot with 0% recovery (errors compound)
 
 
 class ScenarioB(BaseScenario):
@@ -282,8 +110,12 @@ class ScenarioB(BaseScenario):
             metric_collector=metric_collector,
         )
 
-        # Context rot simulation
-        self._context_rot = ContextRotSimulator(context_rot_config, seed)
+        # Context rot simulation - using shared module with NO recovery
+        # SCENARIO_B_ROT_CONFIG has recovery_source=NONE, recovery_accuracy=0.0
+        self._context_rot = ContextRotSimulator(
+            context_rot_config or SCENARIO_B_ROT_CONFIG,
+            seed=seed,
+        )
 
         # Hallucination injection (unique to Scenario B)
         self._hallucination_mgr = HallucinationManager(
@@ -602,70 +434,86 @@ class ScenarioB(BaseScenario):
     async def apply_daily_context_rot(self) -> dict[str, int]:
         """
         Apply context rot to all agent memories at end of day.
+        
+        In Scenario B, there is NO recovery mechanism (recovery_source=NONE),
+        so all context rot results in permanent loss. This is the key difference
+        from Scenario A where exchange provides ~60% recovery.
 
         Returns:
-            Dict mapping agent_id to keys_lost count
+            Dict mapping agent_id to keys_lost count (net loss, after any recovery)
         """
         results = {}
 
         # Apply to buyers
         for buyer_id, memory in self._buyer_memories.items():
             # Check for restart first
-            if self._context_rot.check_restart(memory, self.current_day):
-                keys_lost_count = memory.memory_size()
-                results[buyer_id] = keys_lost_count
-                # Record context rot event (restart = full wipe, is_decay=False)
+            restart_event = self._context_rot.check_restart(memory, self.current_day)
+            if restart_event:
+                # In Scenario B: no recovery, so net_loss = keys_lost
+                net_loss = restart_event.keys_lost  # recovery is 0 in Scenario B
+                results[buyer_id] = net_loss
                 await self.record_context_rot(
                     agent_id=buyer_id,
-                    keys_lost=keys_lost_count,
+                    keys_lost=restart_event.keys_lost,
                     is_decay=False,
                     agent_type="buyer",
                     recovery_attempted=False,  # Scenario B has no recovery mechanism
+                    recovery_successful=False,
+                    recovery_accuracy=0.0,
                     recovery_source="none",
                 )
             else:
                 # Apply gradual decay
-                keys_lost, lost_keys = self._context_rot.apply_daily_decay(
+                decay_event = self._context_rot.apply_daily_decay(
                     memory, self.current_day
                 )
-                if keys_lost > 0:
-                    results[buyer_id] = keys_lost
+                if decay_event.keys_lost > 0:
+                    net_loss = decay_event.keys_lost  # No recovery in Scenario B
+                    results[buyer_id] = net_loss
                     await self.record_context_rot(
                         agent_id=buyer_id,
-                        keys_lost=keys_lost,
+                        keys_lost=decay_event.keys_lost,
                         is_decay=True,
                         agent_type="buyer",
-                        keys_lost_names=lost_keys,
+                        keys_lost_names=decay_event.keys_lost_names,
                         recovery_attempted=False,
+                        recovery_successful=False,
+                        recovery_accuracy=0.0,
                         recovery_source="none",
                     )
 
         # Apply to sellers
         for seller_id, memory in self._seller_memories.items():
-            if self._context_rot.check_restart(memory, self.current_day):
-                keys_lost_count = memory.memory_size()
-                results[seller_id] = keys_lost_count
+            restart_event = self._context_rot.check_restart(memory, self.current_day)
+            if restart_event:
+                net_loss = restart_event.keys_lost
+                results[seller_id] = net_loss
                 await self.record_context_rot(
                     agent_id=seller_id,
-                    keys_lost=keys_lost_count,
+                    keys_lost=restart_event.keys_lost,
                     is_decay=False,
                     agent_type="seller",
                     recovery_attempted=False,
+                    recovery_successful=False,
+                    recovery_accuracy=0.0,
                     recovery_source="none",
                 )
             else:
-                keys_lost, lost_keys = self._context_rot.apply_daily_decay(
+                decay_event = self._context_rot.apply_daily_decay(
                     memory, self.current_day
                 )
-                if keys_lost > 0:
-                    results[seller_id] = keys_lost
+                if decay_event.keys_lost > 0:
+                    net_loss = decay_event.keys_lost
+                    results[seller_id] = net_loss
                     await self.record_context_rot(
                         agent_id=seller_id,
-                        keys_lost=keys_lost,
+                        keys_lost=decay_event.keys_lost,
                         is_decay=True,
                         agent_type="seller",
-                        keys_lost_names=lost_keys,
+                        keys_lost_names=decay_event.keys_lost_names,
                         recovery_attempted=False,
+                        recovery_successful=False,
+                        recovery_accuracy=0.0,
                         recovery_source="none",
                     )
 
