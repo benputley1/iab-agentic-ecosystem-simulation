@@ -1,0 +1,99 @@
+{
+  "simulation_id": "sim-20260130-154838",
+  "start_time": "2026-01-30T15:48:38.156880",
+  "end_time": "2026-01-30T15:49:17.950895",
+  "days_simulated": 3,
+  "status": "completed",
+  "total_deals": 102,
+  "total_hallucinations": 102,
+  "total_hallucination_rate": 1.0,
+  "total_input_tokens": 0,
+  "total_output_tokens": 0,
+  "total_api_cost_usd": 0.0,
+  "avg_latency_ms": 390.03068325566306,
+  "daily_metrics": [
+    {
+      "day": 1,
+      "deals_processed": 34,
+      "hallucinations": 34,
+      "hallucination_rate": 1.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "api_cost_usd": 0.0,
+      "avg_latency_ms": 518.5191280701581,
+      "context_health_pct": 98.0,
+      "avg_bid_cpm": 0.0,
+      "bid_variance": 0.0,
+      "hallucination_types": {
+        "api_error": 34
+      }
+    },
+    {
+      "day": 2,
+      "deals_processed": 34,
+      "hallucinations": 34,
+      "hallucination_rate": 1.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "api_cost_usd": 0.0,
+      "avg_latency_ms": 339.78371760424443,
+      "context_health_pct": 96.03999999999999,
+      "avg_bid_cpm": 0.0,
+      "bid_variance": 0.0,
+      "hallucination_types": {
+        "api_error": 34
+      }
+    },
+    {
+      "day": 3,
+      "deals_processed": 34,
+      "hallucinations": 34,
+      "hallucination_rate": 1.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "api_cost_usd": 0.0,
+      "avg_latency_ms": 311.7892040925867,
+      "context_health_pct": 94.11919999999999,
+      "avg_bid_cpm": 0.0,
+      "bid_variance": 0.0,
+      "hallucination_types": {
+        "api_error": 34
+      }
+    }
+  ],
+  "context_rot_curve": [
+    {
+      "day": 1,
+      "context_health_pct": 98.0
+    },
+    {
+      "day": 2,
+      "context_health_pct": 96.03999999999999
+    },
+    {
+      "day": 3,
+      "context_health_pct": 94.11919999999999
+    }
+  ],
+  "hallucination_growth_curve": [
+    {
+      "day": 1,
+      "hallucination_rate": 1.0,
+      "hallucinations": 34
+    },
+    {
+      "day": 2,
+      "hallucination_rate": 1.0,
+      "hallucinations": 34
+    },
+    {
+      "day": 3,
+      "hallucination_rate": 1.0,
+      "hallucinations": 34
+    }
+  ],
+  "peak_hallucination_rate": 1.0,
+  "peak_hallucination_day": 1,
+  "context_health_day_30": 54.54843193824369,
+  "correlation_context_hallucination": 0.0
+}

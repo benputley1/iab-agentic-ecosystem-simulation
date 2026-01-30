@@ -1,0 +1,77 @@
+{
+  "simulation_id": "real-ctx-20260130-160225",
+  "start_time": "2026-01-30T16:02:25.216525+00:00",
+  "end_time": "2026-01-30T16:04:07.693331+00:00",
+  "mode": "real_context",
+  "days_simulated": 2,
+  "status": "completed",
+  "total_deals": 54,
+  "total_hallucinations": 0,
+  "total_hallucination_rate": 0.0,
+  "total_input_tokens": 76944,
+  "total_output_tokens": 378,
+  "total_api_cost_usd": 0.236502,
+  "final_context_size": 2646,
+  "context_growth_curve": [
+    {
+      "day": 1,
+      "history_entries": 27,
+      "avg_input_tokens": 801,
+      "cumulative_tokens": 21634
+    },
+    {
+      "day": 2,
+      "history_entries": 54,
+      "avg_input_tokens": 2048,
+      "cumulative_tokens": 76944
+    }
+  ],
+  "hallucination_by_context_size": [
+    {
+      "day": 1,
+      "avg_context_tokens": 801,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 27
+    },
+    {
+      "day": 2,
+      "avg_context_tokens": 2048,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 27
+    }
+  ],
+  "daily_metrics": [
+    {
+      "day": 1,
+      "deals_processed": 27,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 21634,
+      "day_output_tokens": 189,
+      "cumulative_input_tokens": 21634,
+      "avg_context_size": 801,
+      "api_cost_usd": 0.067737,
+      "avg_latency_ms": 1758.902249512849,
+      "avg_bid_cpm": 17.61111111111111,
+      "hallucination_types": {}
+    },
+    {
+      "day": 2,
+      "deals_processed": 27,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 55310,
+      "day_output_tokens": 189,
+      "cumulative_input_tokens": 76944,
+      "avg_context_size": 2048,
+      "api_cost_usd": 0.168765,
+      "avg_latency_ms": 2036.1041227976482,
+      "avg_bid_cpm": 17.64814814814815,
+      "hallucination_types": {}
+    }
+  ],
+  "first_hallucination_at_tokens": null,
+  "hallucination_spike_threshold": null
+}

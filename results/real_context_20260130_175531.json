@@ -1,0 +1,833 @@
+{
+  "simulation_id": "real-ctx-20260130-160423",
+  "start_time": "2026-01-30T16:04:23.831170+00:00",
+  "end_time": "2026-01-30T17:55:31.129172+00:00",
+  "mode": "real_context",
+  "days_simulated": 30,
+  "status": "completed",
+  "total_deals": 2520,
+  "total_hallucinations": 0,
+  "total_hallucination_rate": 0.0,
+  "total_input_tokens": 148461018,
+  "total_output_tokens": 17640,
+  "total_api_cost_usd": 445.64765399999993,
+  "final_context_size": 118227,
+  "context_growth_curve": [
+    {
+      "day": 1,
+      "history_entries": 84,
+      "avg_input_tokens": 2121,
+      "cumulative_tokens": 178166
+    },
+    {
+      "day": 2,
+      "history_entries": 168,
+      "avg_input_tokens": 6005,
+      "cumulative_tokens": 682668
+    },
+    {
+      "day": 3,
+      "history_entries": 252,
+      "avg_input_tokens": 9889,
+      "cumulative_tokens": 1513345
+    },
+    {
+      "day": 4,
+      "history_entries": 336,
+      "avg_input_tokens": 13775,
+      "cumulative_tokens": 2670456
+    },
+    {
+      "day": 5,
+      "history_entries": 420,
+      "avg_input_tokens": 17661,
+      "cumulative_tokens": 4153997
+    },
+    {
+      "day": 6,
+      "history_entries": 504,
+      "avg_input_tokens": 21547,
+      "cumulative_tokens": 5963976
+    },
+    {
+      "day": 7,
+      "history_entries": 588,
+      "avg_input_tokens": 25432,
+      "cumulative_tokens": 8100278
+    },
+    {
+      "day": 8,
+      "history_entries": 672,
+      "avg_input_tokens": 29316,
+      "cumulative_tokens": 10562838
+    },
+    {
+      "day": 9,
+      "history_entries": 756,
+      "avg_input_tokens": 33203,
+      "cumulative_tokens": 13351892
+    },
+    {
+      "day": 10,
+      "history_entries": 840,
+      "avg_input_tokens": 37087,
+      "cumulative_tokens": 16467252
+    },
+    {
+      "day": 11,
+      "history_entries": 924,
+      "avg_input_tokens": 40971,
+      "cumulative_tokens": 19908894
+    },
+    {
+      "day": 12,
+      "history_entries": 1008,
+      "avg_input_tokens": 44857,
+      "cumulative_tokens": 23676920
+    },
+    {
+      "day": 13,
+      "history_entries": 1092,
+      "avg_input_tokens": 48794,
+      "cumulative_tokens": 27775658
+    },
+    {
+      "day": 14,
+      "history_entries": 1176,
+      "avg_input_tokens": 52763,
+      "cumulative_tokens": 32207815
+    },
+    {
+      "day": 15,
+      "history_entries": 1260,
+      "avg_input_tokens": 56731,
+      "cumulative_tokens": 36973221
+    },
+    {
+      "day": 16,
+      "history_entries": 1344,
+      "avg_input_tokens": 60698,
+      "cumulative_tokens": 42071933
+    },
+    {
+      "day": 17,
+      "history_entries": 1428,
+      "avg_input_tokens": 64667,
+      "cumulative_tokens": 47504016
+    },
+    {
+      "day": 18,
+      "history_entries": 1512,
+      "avg_input_tokens": 68637,
+      "cumulative_tokens": 53269607
+    },
+    {
+      "day": 19,
+      "history_entries": 1596,
+      "avg_input_tokens": 72604,
+      "cumulative_tokens": 59368389
+    },
+    {
+      "day": 20,
+      "history_entries": 1680,
+      "avg_input_tokens": 76576,
+      "cumulative_tokens": 65800791
+    },
+    {
+      "day": 21,
+      "history_entries": 1764,
+      "avg_input_tokens": 80546,
+      "cumulative_tokens": 72566661
+    },
+    {
+      "day": 22,
+      "history_entries": 1848,
+      "avg_input_tokens": 84512,
+      "cumulative_tokens": 79665678
+    },
+    {
+      "day": 23,
+      "history_entries": 1932,
+      "avg_input_tokens": 88482,
+      "cumulative_tokens": 87098191
+    },
+    {
+      "day": 24,
+      "history_entries": 2016,
+      "avg_input_tokens": 92454,
+      "cumulative_tokens": 94864330
+    },
+    {
+      "day": 25,
+      "history_entries": 2100,
+      "avg_input_tokens": 96419,
+      "cumulative_tokens": 102963560
+    },
+    {
+      "day": 26,
+      "history_entries": 2184,
+      "avg_input_tokens": 100388,
+      "cumulative_tokens": 111396230
+    },
+    {
+      "day": 27,
+      "history_entries": 2268,
+      "avg_input_tokens": 104358,
+      "cumulative_tokens": 120162332
+    },
+    {
+      "day": 28,
+      "history_entries": 2352,
+      "avg_input_tokens": 108326,
+      "cumulative_tokens": 129261757
+    },
+    {
+      "day": 29,
+      "history_entries": 2436,
+      "avg_input_tokens": 112297,
+      "cumulative_tokens": 138694737
+    },
+    {
+      "day": 30,
+      "history_entries": 2520,
+      "avg_input_tokens": 116265,
+      "cumulative_tokens": 148461018
+    }
+  ],
+  "hallucination_by_context_size": [
+    {
+      "day": 1,
+      "avg_context_tokens": 2121,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 2,
+      "avg_context_tokens": 6005,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 3,
+      "avg_context_tokens": 9889,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 4,
+      "avg_context_tokens": 13775,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 5,
+      "avg_context_tokens": 17661,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 6,
+      "avg_context_tokens": 21547,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 7,
+      "avg_context_tokens": 25432,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 8,
+      "avg_context_tokens": 29316,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 9,
+      "avg_context_tokens": 33203,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 10,
+      "avg_context_tokens": 37087,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 11,
+      "avg_context_tokens": 40971,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 12,
+      "avg_context_tokens": 44857,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 13,
+      "avg_context_tokens": 48794,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 14,
+      "avg_context_tokens": 52763,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 15,
+      "avg_context_tokens": 56731,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 16,
+      "avg_context_tokens": 60698,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 17,
+      "avg_context_tokens": 64667,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 18,
+      "avg_context_tokens": 68637,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 19,
+      "avg_context_tokens": 72604,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 20,
+      "avg_context_tokens": 76576,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 21,
+      "avg_context_tokens": 80546,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 22,
+      "avg_context_tokens": 84512,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 23,
+      "avg_context_tokens": 88482,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 24,
+      "avg_context_tokens": 92454,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 25,
+      "avg_context_tokens": 96419,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 26,
+      "avg_context_tokens": 100388,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 27,
+      "avg_context_tokens": 104358,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 28,
+      "avg_context_tokens": 108326,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 29,
+      "avg_context_tokens": 112297,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    },
+    {
+      "day": 30,
+      "avg_context_tokens": 116265,
+      "hallucination_rate": 0.0,
+      "hallucinations": 0,
+      "deals": 84
+    }
+  ],
+  "daily_metrics": [
+    {
+      "day": 1,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 178166,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 178166,
+      "avg_context_size": 2121,
+      "api_cost_usd": 0.5433180000000001,
+      "avg_latency_ms": 1680.7067820004054,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 2,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 504502,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 682668,
+      "avg_context_size": 6005,
+      "api_cost_usd": 1.522326,
+      "avg_latency_ms": 1720.7418623424712,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 3,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 830677,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 1513345,
+      "avg_context_size": 9889,
+      "api_cost_usd": 2.500851,
+      "avg_latency_ms": 1979.2211878867377,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 4,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 1157111,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 2670456,
+      "avg_context_size": 13775,
+      "api_cost_usd": 3.480153,
+      "avg_latency_ms": 2021.6985628718421,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 5,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 1483541,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 4153997,
+      "avg_context_size": 17661,
+      "api_cost_usd": 4.459443,
+      "avg_latency_ms": 1975.2713895979382,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 6,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 1809979,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 5963976,
+      "avg_context_size": 21547,
+      "api_cost_usd": 5.438757,
+      "avg_latency_ms": 2092.088262240092,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 7,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 2136302,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 8100278,
+      "avg_context_size": 25432,
+      "api_cost_usd": 6.417726,
+      "avg_latency_ms": 2101.5256671678453,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 8,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 2462560,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 10562838,
+      "avg_context_size": 29316,
+      "api_cost_usd": 7.3965,
+      "avg_latency_ms": 2215.4343128204346,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 9,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 2789054,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 13351892,
+      "avg_context_size": 33203,
+      "api_cost_usd": 8.375982,
+      "avg_latency_ms": 2316.1844128654116,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 10,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 3115360,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 16467252,
+      "avg_context_size": 37087,
+      "api_cost_usd": 9.3549,
+      "avg_latency_ms": 2376.0039976664953,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 11,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 3441642,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 19908894,
+      "avg_context_size": 40971,
+      "api_cost_usd": 10.333746,
+      "avg_latency_ms": 2363.0856559390113,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 12,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 3768026,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 23676920,
+      "avg_context_size": 44857,
+      "api_cost_usd": 11.312898,
+      "avg_latency_ms": 2495.4890977768673,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 13,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 4098738,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 27775658,
+      "avg_context_size": 48794,
+      "api_cost_usd": 12.305034000000001,
+      "avg_latency_ms": 2485.1393926711307,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 14,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 4432157,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 32207815,
+      "avg_context_size": 52763,
+      "api_cost_usd": 13.305291,
+      "avg_latency_ms": 2743.9637326058887,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 15,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 4765406,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 36973221,
+      "avg_context_size": 56731,
+      "api_cost_usd": 14.305038,
+      "avg_latency_ms": 2677.378382001604,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 16,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 5098712,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 42071933,
+      "avg_context_size": 60698,
+      "api_cost_usd": 15.304956,
+      "avg_latency_ms": 2754.7401189804077,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 17,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 5432083,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 47504016,
+      "avg_context_size": 64667,
+      "api_cost_usd": 16.305069,
+      "avg_latency_ms": 2863.012149220421,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 18,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 5765591,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 53269607,
+      "avg_context_size": 68637,
+      "api_cost_usd": 17.305593000000002,
+      "avg_latency_ms": 2952.114468529111,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 19,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 6098782,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 59368389,
+      "avg_context_size": 72604,
+      "api_cost_usd": 18.305166,
+      "avg_latency_ms": 2722.4126145953223,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 20,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 6432402,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 65800791,
+      "avg_context_size": 76576,
+      "api_cost_usd": 19.306026,
+      "avg_latency_ms": 2861.376410438901,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 21,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 6765870,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 72566661,
+      "avg_context_size": 80546,
+      "api_cost_usd": 20.30643,
+      "avg_latency_ms": 2999.6556015241713,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 22,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 7099017,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 79665678,
+      "avg_context_size": 84512,
+      "api_cost_usd": 21.305871,
+      "avg_latency_ms": 2906.128457614354,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 23,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 7432513,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 87098191,
+      "avg_context_size": 88482,
+      "api_cost_usd": 22.306359,
+      "avg_latency_ms": 3051.6571260633923,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 24,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 7766139,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 94864330,
+      "avg_context_size": 92454,
+      "api_cost_usd": 23.307237,
+      "avg_latency_ms": 3065.689552397955,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 25,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 8099230,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 102963560,
+      "avg_context_size": 96419,
+      "api_cost_usd": 24.30651,
+      "avg_latency_ms": 3175.6207063084557,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 26,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 8432670,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 111396230,
+      "avg_context_size": 100388,
+      "api_cost_usd": 25.30683,
+      "avg_latency_ms": 3338.0724361964635,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 27,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 8766102,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 120162332,
+      "avg_context_size": 104358,
+      "api_cost_usd": 26.307126,
+      "avg_latency_ms": 3183.3995552290053,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 28,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 9099425,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 129261757,
+      "avg_context_size": 108326,
+      "api_cost_usd": 27.307095,
+      "avg_latency_ms": 3338.5451379276456,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 29,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 9432980,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 138694737,
+      "avg_context_size": 112297,
+      "api_cost_usd": 28.307760000000002,
+      "avg_latency_ms": 3332.4174228168667,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    },
+    {
+      "day": 30,
+      "deals_processed": 84,
+      "hallucinations": 0,
+      "hallucination_rate": 0.0,
+      "day_input_tokens": 9766281,
+      "day_output_tokens": 588,
+      "cumulative_input_tokens": 148461018,
+      "avg_context_size": 116265,
+      "api_cost_usd": 29.307663,
+      "avg_latency_ms": 3452.6582615716115,
+      "avg_bid_cpm": 18.86904761904762,
+      "hallucination_types": {}
+    }
+  ],
+  "first_hallucination_at_tokens": null,
+  "hallucination_spike_threshold": null
+}
