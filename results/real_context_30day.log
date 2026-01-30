@@ -1,0 +1,241 @@
+
+============================================================
+IAB Agentic Simulation - REAL CONTEXT MODE
+============================================================
+Days: 30
+Deals/day: 100
+Model: claude-sonnet-4-20250514
+Max history tokens: 150,000
+
+This simulation uses REAL context accumulation.
+History grows naturally - no artificial limiting.
+============================================================
+
+
+--- Day 1/30 | History: 0 txns (~0 tokens) ---
+  25/84 deals | Context: 1,313 tokens
+  50/84 deals | Context: 2,471 tokens
+  75/84 deals | Context: 3,630 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 2,121 tokens | Cost: $0.5433
+
+--- Day 2/30 | History: 84 txns (~4,200 tokens) ---
+  25/84 deals | Context: 5,193 tokens
+  50/84 deals | Context: 6,352 tokens
+  75/84 deals | Context: 7,509 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 6,005 tokens | Cost: $1.5223
+
+--- Day 3/30 | History: 168 txns (~8,400 tokens) ---
+  25/84 deals | Context: 9,078 tokens
+  50/84 deals | Context: 10,231 tokens
+  75/84 deals | Context: 11,391 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 9,889 tokens | Cost: $2.5009
+
+--- Day 4/30 | History: 252 txns (~12,600 tokens) ---
+  25/84 deals | Context: 12,964 tokens
+  50/84 deals | Context: 14,124 tokens
+  75/84 deals | Context: 15,276 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 13,775 tokens | Cost: $3.4802
+
+--- Day 5/30 | History: 336 txns (~16,800 tokens) ---
+  25/84 deals | Context: 16,848 tokens
+  50/84 deals | Context: 18,010 tokens
+  75/84 deals | Context: 19,166 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 17,661 tokens | Cost: $4.4594
+
+--- Day 6/30 | History: 420 txns (~21,000 tokens) ---
+  25/84 deals | Context: 20,732 tokens
+  50/84 deals | Context: 21,896 tokens
+  75/84 deals | Context: 23,053 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 21,547 tokens | Cost: $5.4388
+
+--- Day 7/30 | History: 504 txns (~25,200 tokens) ---
+  25/84 deals | Context: 24,624 tokens
+  50/84 deals | Context: 25,780 tokens
+  75/84 deals | Context: 26,936 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 25,432 tokens | Cost: $6.4177
+
+--- Day 8/30 | History: 588 txns (~29,400 tokens) ---
+  25/84 deals | Context: 28,507 tokens
+  50/84 deals | Context: 29,661 tokens
+  75/84 deals | Context: 30,820 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 29,316 tokens | Cost: $7.3965
+
+--- Day 9/30 | History: 672 txns (~33,600 tokens) ---
+  25/84 deals | Context: 32,394 tokens
+  50/84 deals | Context: 33,551 tokens
+  75/84 deals | Context: 34,704 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 33,203 tokens | Cost: $8.3760
+
+--- Day 10/30 | History: 756 txns (~37,800 tokens) ---
+  25/84 deals | Context: 36,283 tokens
+  50/84 deals | Context: 37,438 tokens
+  75/84 deals | Context: 38,590 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 37,087 tokens | Cost: $9.3549
+
+--- Day 11/30 | History: 840 txns (~42,000 tokens) ---
+  25/84 deals | Context: 40,163 tokens
+  50/84 deals | Context: 41,322 tokens
+  75/84 deals | Context: 42,470 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 40,971 tokens | Cost: $10.3337
+
+--- Day 12/30 | History: 924 txns (~46,200 tokens) ---
+  25/84 deals | Context: 44,042 tokens
+  50/84 deals | Context: 45,208 tokens
+  75/84 deals | Context: 46,360 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 44,857 tokens | Cost: $11.3129
+
+--- Day 13/30 | History: 1008 txns (~50,400 tokens) ---
+  25/84 deals | Context: 47,968 tokens
+  50/84 deals | Context: 49,148 tokens
+  75/84 deals | Context: 50,325 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 48,794 tokens | Cost: $12.3050
+
+--- Day 14/30 | History: 1092 txns (~54,600 tokens) ---
+  25/84 deals | Context: 51,941 tokens
+  50/84 deals | Context: 53,119 tokens
+  75/84 deals | Context: 54,300 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 52,763 tokens | Cost: $13.3053
+
+--- Day 15/30 | History: 1176 txns (~58,800 tokens) ---
+  25/84 deals | Context: 55,910 tokens
+  50/84 deals | Context: 57,083 tokens
+  75/84 deals | Context: 58,269 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 56,731 tokens | Cost: $14.3050
+
+--- Day 16/30 | History: 1260 txns (~63,000 tokens) ---
+  25/84 deals | Context: 59,876 tokens
+  50/84 deals | Context: 61,051 tokens
+  75/84 deals | Context: 62,238 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 60,698 tokens | Cost: $15.3050
+
+--- Day 17/30 | History: 1344 txns (~67,200 tokens) ---
+  25/84 deals | Context: 63,847 tokens
+  50/84 deals | Context: 65,019 tokens
+  75/84 deals | Context: 66,204 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 64,667 tokens | Cost: $16.3051
+
+--- Day 18/30 | History: 1428 txns (~71,400 tokens) ---
+  25/84 deals | Context: 67,805 tokens
+  50/84 deals | Context: 68,991 tokens
+  75/84 deals | Context: 70,176 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 68,637 tokens | Cost: $17.3056
+
+--- Day 19/30 | History: 1512 txns (~75,600 tokens) ---
+  25/84 deals | Context: 71,772 tokens
+  50/84 deals | Context: 72,960 tokens
+  75/84 deals | Context: 74,142 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 72,604 tokens | Cost: $18.3052
+
+--- Day 20/30 | History: 1596 txns (~79,800 tokens) ---
+  25/84 deals | Context: 75,746 tokens
+  50/84 deals | Context: 76,935 tokens
+  75/84 deals | Context: 78,112 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 76,576 tokens | Cost: $19.3060
+
+--- Day 21/30 | History: 1680 txns (~84,000 tokens) ---
+  25/84 deals | Context: 79,718 tokens
+  50/84 deals | Context: 80,898 tokens
+  75/84 deals | Context: 82,082 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 80,546 tokens | Cost: $20.3064
+
+--- Day 22/30 | History: 1764 txns (~88,200 tokens) ---
+  25/84 deals | Context: 83,682 tokens
+  50/84 deals | Context: 84,864 tokens
+  75/84 deals | Context: 86,049 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 84,512 tokens | Cost: $21.3059
+
+--- Day 23/30 | History: 1848 txns (~92,400 tokens) ---
+  25/84 deals | Context: 87,650 tokens
+  50/84 deals | Context: 88,840 tokens
+  75/84 deals | Context: 90,013 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 88,482 tokens | Cost: $22.3064
+
+--- Day 24/30 | History: 1932 txns (~96,600 tokens) ---
+  25/84 deals | Context: 91,626 tokens
+  50/84 deals | Context: 92,812 tokens
+  75/84 deals | Context: 93,986 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 92,454 tokens | Cost: $23.3072
+
+--- Day 25/30 | History: 2016 txns (~100,800 tokens) ---
+  25/84 deals | Context: 95,594 tokens
+  50/84 deals | Context: 96,777 tokens
+  75/84 deals | Context: 97,953 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 96,419 tokens | Cost: $24.3065
+
+--- Day 26/30 | History: 2100 txns (~105,000 tokens) ---
+  25/84 deals | Context: 99,565 tokens
+  50/84 deals | Context: 100,740 tokens
+  75/84 deals | Context: 101,921 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 100,388 tokens | Cost: $25.3068
+
+--- Day 27/30 | History: 2184 txns (~109,200 tokens) ---
+  25/84 deals | Context: 103,535 tokens
+  50/84 deals | Context: 104,715 tokens
+  75/84 deals | Context: 105,890 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 104,358 tokens | Cost: $26.3071
+
+--- Day 28/30 | History: 2268 txns (~113,400 tokens) ---
+  25/84 deals | Context: 107,501 tokens
+  50/84 deals | Context: 108,679 tokens
+  75/84 deals | Context: 109,866 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 108,326 tokens | Cost: $27.3071
+
+--- Day 29/30 | History: 2352 txns (~117,600 tokens) ---
+  25/84 deals | Context: 111,470 tokens
+  50/84 deals | Context: 112,653 tokens
+  75/84 deals | Context: 113,836 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 112,297 tokens | Cost: $28.3078
+
+--- Day 30/30 | History: 2436 txns (~121,800 tokens) ---
+  25/84 deals | Context: 115,440 tokens
+  50/84 deals | Context: 116,618 tokens
+  75/84 deals | Context: 117,799 tokens
+  Hallucinations: 0/84 (0.0%)
+  Avg context: 116,265 tokens | Cost: $29.3077
+
+============================================================
+SIMULATION COMPLETE
+============================================================
+Days: 30
+Total deals: 2,520
+Total hallucinations: 0
+Overall rate: 0.00%
+
+Context Growth:
+  Final context size: 118,227 tokens
+  First hallucination at: N/A cumulative tokens
+  Spike threshold (>5%): N/A avg tokens
+
+Cost: $445.65
+Time: 6667.3s
+
+Results: /root/clawd/iab-sim-work/results/real_context_20260130_175531.json

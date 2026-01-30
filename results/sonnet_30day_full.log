@@ -1,0 +1,21 @@
+/root/clawd/iab-sim-work/scripts/run_real_llm_simulation.py:145: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  simulation_id=f"sim-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}",
+/root/clawd/iab-sim-work/scripts/run_real_llm_simulation.py:146: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  start_time=datetime.utcnow().isoformat(),
+
+============================================================
+IAB Agentic Ecosystem Simulation - Real LLM Mode
+============================================================
+Days: 30
+Deals/day: 500
+Model: claude-sonnet-4-20250514
+Dry run: False
+
+Cost estimate: $19.12
+Total API calls: 15,000
+
+Starting simulation...
+
+--- Day 1/30 | Context: 98 txns (98.0% health) ---
+  Processed 25/484 deals...
+  Processed 50/484 deals...

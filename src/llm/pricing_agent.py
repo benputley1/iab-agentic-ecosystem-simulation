@@ -81,6 +81,8 @@ class PricingAgent:
     - Context window limiting to simulate context rot
     - Hallucination detection by comparing decisions against ground truth bounds
     - Full API cost and token tracking
+    - Per-agent isolation with unique agent_id
+    - Deal recording from agent's perspective for reconciliation tracking
     """
     
     # Haiku pricing per 1M tokens
@@ -89,6 +91,8 @@ class PricingAgent:
     
     def __init__(
         self,
+        agent_id: str = "default",
+        agent_type: str = "buyer",  # "buyer" or "seller"
         api_key: Optional[str] = None,
         model: str = "claude-sonnet-4-20250514",
         max_context_history: int = 100,
@@ -97,10 +101,15 @@ class PricingAgent:
         Initialize the Pricing Agent.
         
         Args:
+            agent_id: Unique identifier for this agent (e.g., "buyer_1", "seller_2")
+            agent_type: Type of agent - "buyer" or "seller"
             api_key: Anthropic API key (defaults to ANTHROPIC_API_KEY env var)
             model: Claude model to use (default: Haiku for cost efficiency)
             max_context_history: Maximum transaction history to keep
         """
+        self.agent_id = agent_id
+        self.agent_type = agent_type
+        
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         if not self.api_key:
             raise ValueError("ANTHROPIC_API_KEY not found. Set it in .env or pass explicitly.")
@@ -109,8 +118,11 @@ class PricingAgent:
         self.model = model
         self.max_context_history = max_context_history
         
-        # Agent memory - tracks past decisions
+        # Agent memory - tracks past decisions (ISOLATED per agent instance)
         self.context_history: List[Dict[str, Any]] = []
+        
+        # Deal records - agent's own view of completed deals (for reconciliation)
+        self.deal_records: Dict[str, dict] = {}
         
         # Metrics tracking
         self.metrics = HallucinationMetrics()
@@ -346,6 +358,57 @@ Respond with ONLY a number representing your CPM bid (e.g., "12.50"). No other t
     def reset_context(self):
         """Clear the agent's context history (simulates memory wipe)."""
         self.context_history = []
+        self.deal_records = {}
+    
+    def record_deal(self, deal_record: dict) -> None:
+        """
+        Record a completed deal from this agent's perspective.
+        
+        This is the agent's "memory" of the deal - may differ from counterparty's
+        memory due to context rot, hallucinations, or interpretation differences.
+        
+        Args:
+            deal_record: Dict containing:
+                - deal_id: str - Unique deal identifier
+                - counterparty_id: str - The other party's agent_id
+                - agreed_cpm: float - What this agent believes was agreed
+                - impressions: int - Impression count this agent recorded
+                - channel: str - Ad channel type
+                - day: int - Simulation day
+                - timestamp: str - When recorded
+                - my_bid: float - What this agent bid/accepted
+                - their_bid: Optional[float] - What counterparty bid (if known)
+                - raw_response: str - LLM response that led to this decision
+                - notes: Optional[str] - Any additional context
+        """
+        deal_id = deal_record.get("deal_id")
+        if not deal_id:
+            raise ValueError("deal_record must include 'deal_id'")
+        
+        # Add agent metadata
+        deal_record["recorded_by"] = self.agent_id
+        deal_record["agent_type"] = self.agent_type
+        deal_record["recorded_at"] = datetime.utcnow().isoformat()
+        
+        self.deal_records[deal_id] = deal_record
+    
+    def get_deal_record(self, deal_id: str) -> Optional[dict]:
+        """Retrieve a deal record by ID."""
+        return self.deal_records.get(deal_id)
+    
+    def get_state_summary(self) -> dict:
+        """Get a summary of this agent's current state for monitoring."""
+        return {
+            "agent_id": self.agent_id,
+            "agent_type": self.agent_type,
+            "context_entries": len(self.context_history),
+            "deal_records": len(self.deal_records),
+            "total_tokens": self.metrics.total_input_tokens + self.metrics.total_output_tokens,
+            "total_decisions": self.metrics.total_decisions,
+            "hallucinations": self.metrics.hallucinations,
+            "hallucination_rate": self.metrics.hallucination_rate,
+            "total_cost_usd": self.metrics.total_api_cost_usd,
+        }
     
     def get_cost_summary(self) -> Dict[str, Any]:
         """Get a summary of API costs and token usage."""

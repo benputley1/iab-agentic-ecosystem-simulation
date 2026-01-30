@@ -1,0 +1,91 @@
+{
+  "status": "ok",
+  "generated_at": "2026-01-30T16:23:56.452266",
+  "simulation_progress": {
+    "days_completed": 7,
+    "total_days": 30,
+    "percent_complete": 23.333333333333332
+  },
+  "context_status": {
+    "current_tokens": 25432,
+    "utilization_pct": 12.716,
+    "projected_day30": 108994.28571428572
+  },
+  "degradation_signals": {
+    "timestamp": "2026-01-30T16:23:56.452100",
+    "day": 7,
+    "context_tokens": 25432,
+    "context_utilization": 12.716,
+    "overall_variance": 0.0,
+    "variance_trend": "stable",
+    "variance_change_pct": 0.0,
+    "consistency_score": 100.0,
+    "consistency_trend": "stable",
+    "bid_drift_pct": 0.0,
+    "drift_direction": "none",
+    "channel_metrics": {},
+    "warning_level": "green",
+    "warnings": []
+  },
+  "daily_summary": [
+    {
+      "day": 1,
+      "hallucinations": 0,
+      "deals": 84,
+      "hallucination_rate": 0.0,
+      "avg_context": 2121,
+      "cost": 0.5433
+    },
+    {
+      "day": 2,
+      "hallucinations": 0,
+      "deals": 84,
+      "hallucination_rate": 0.0,
+      "avg_context": 6005,
+      "cost": 1.5223
+    },
+    {
+      "day": 3,
+      "hallucinations": 0,
+      "deals": 84,
+      "hallucination_rate": 0.0,
+      "avg_context": 9889,
+      "cost": 2.5009
+    },
+    {
+      "day": 4,
+      "hallucinations": 0,
+      "deals": 84,
+      "hallucination_rate": 0.0,
+      "avg_context": 13775,
+      "cost": 3.4802
+    },
+    {
+      "day": 5,
+      "hallucinations": 0,
+      "deals": 84,
+      "hallucination_rate": 0.0,
+      "avg_context": 17661,
+      "cost": 4.4594
+    },
+    {
+      "day": 6,
+      "hallucinations": 0,
+      "deals": 84,
+      "hallucination_rate": 0.0,
+      "avg_context": 21547,
+      "cost": 5.4388
+    },
+    {
+      "day": 7,
+      "hallucinations": 0,
+      "deals": 84,
+      "hallucination_rate": 0.0,
+      "avg_context": 25432,
+      "cost": 6.4177
+    }
+  ],
+  "recommendations": [
+    "\u2713 No action needed - simulation healthy"
+  ]
+}
