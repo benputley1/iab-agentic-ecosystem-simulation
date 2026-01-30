@@ -349,6 +349,8 @@ class ScenarioB(BaseScenario):
         This method uses HTTP JSON-RPC 2.0 instead of Redis pub/sub,
         following the IAB agentic-direct specification.
         
+        Tracks context rot and hallucination metrics for the simulation.
+        
         Args:
             request: Buyer's bid request
             seller_ids: Optional list of sellers to contact (defaults to all)
@@ -363,6 +365,9 @@ class ScenarioB(BaseScenario):
         buyer_memory = self.get_or_create_buyer_memory(request.buyer_id)
         buyer_memory.pending_requests[request.request_id] = request
         
+        # Get context rot stats for buyer BEFORE negotiation
+        buyer_context_health = self._get_agent_context_health(buyer_memory)
+        
         # Determine which sellers to contact
         target_sellers = seller_ids or list(self._seller_adapters.keys())
         
@@ -373,10 +378,17 @@ class ScenarioB(BaseScenario):
             channel=request.channel,
             max_cpm=request.max_cpm,
             sellers=len(target_sellers),
+            # Context rot metrics
+            buyer_context_health=buyer_context_health["health_pct"],
+            buyer_keys_lost_total=buyer_context_health["total_keys_lost"],
+            simulation_day=self.current_day,
         )
         
         # Try each seller until we get a deal
         for seller_id in target_sellers:
+            seller_memory = self.get_or_create_seller_memory(seller_id)
+            seller_context_health = self._get_agent_context_health(seller_memory)
+            
             result = await self._a2a_manager.negotiate_deal(
                 buyer_id=request.buyer_id,
                 seller_id=seller_id,
@@ -384,7 +396,8 @@ class ScenarioB(BaseScenario):
             )
             
             if result.success:
-                # Apply hallucination to price (context rot simulation)
+                # Apply hallucination to price (context rot effect)
+                original_cpm = result.cpm
                 final_cpm = self._hallucination_mgr.process_price_data(
                     real_price=result.cpm,
                     agent_id=request.buyer_id,
@@ -392,6 +405,25 @@ class ScenarioB(BaseScenario):
                     publisher_id=seller_id,
                     simulation_day=self.current_day,
                 )
+                
+                # Track if hallucination occurred
+                hallucination_occurred = abs(final_cpm - original_cpm) > 0.01
+                hallucination_delta = final_cpm - original_cpm
+                hallucination_pct = (hallucination_delta / original_cpm * 100) if original_cpm > 0 else 0
+                
+                if hallucination_occurred:
+                    logger.warning(
+                        "scenario_b.a2a_http_hallucination",
+                        request_id=request.request_id,
+                        buyer_id=request.buyer_id,
+                        seller_id=seller_id,
+                        original_cpm=round(original_cpm, 2),
+                        hallucinated_cpm=round(final_cpm, 2),
+                        delta=round(hallucination_delta, 2),
+                        delta_pct=round(hallucination_pct, 2),
+                        simulation_day=self.current_day,
+                        buyer_context_health=buyer_context_health["health_pct"],
+                    )
                 
                 # Create deal confirmation
                 deal = DealConfirmation(
@@ -411,14 +443,13 @@ class ScenarioB(BaseScenario):
                 )
                 
                 # Update memories
-                seller_memory = self.get_or_create_seller_memory(seller_id)
                 buyer_memory.deal_history[deal.deal_id] = deal
                 seller_memory.deal_history[deal.deal_id] = deal
                 
                 # Record metrics
                 self.record_deal(deal)
                 
-                # Record decision
+                # Record decision with full context rot/hallucination tracking
                 await self.record_decision(
                     verified=False,  # No ground truth in Scenario B
                     agent_id=request.buyer_id,
@@ -427,12 +458,19 @@ class ScenarioB(BaseScenario):
                     decision_input={
                         "request_id": request.request_id,
                         "seller_id": seller_id,
-                        "offered_cpm": result.cpm,
+                        "offered_cpm": original_cpm,
                         "negotiation_steps": result.steps,
+                        # Context rot state
+                        "buyer_context_health": buyer_context_health,
+                        "seller_context_health": seller_context_health,
                     },
                     decision_output={
                         "deal_id": result.deal_id,
                         "final_cpm": final_cpm,
+                        # Hallucination tracking
+                        "hallucination_occurred": hallucination_occurred,
+                        "hallucination_delta": round(hallucination_delta, 4),
+                        "hallucination_pct": round(hallucination_pct, 2),
                     },
                 )
                 
@@ -441,10 +479,28 @@ class ScenarioB(BaseScenario):
                     deal_id=deal.deal_id,
                     buyer_id=deal.buyer_id,
                     seller_id=deal.seller_id,
-                    cpm=deal.cpm,
+                    original_cpm=round(original_cpm, 2),
+                    final_cpm=round(final_cpm, 2),
                     impressions=deal.impressions,
                     steps=result.steps,
+                    # Context & hallucination metrics
+                    hallucination_occurred=hallucination_occurred,
+                    hallucination_pct=round(hallucination_pct, 2),
+                    buyer_context_health=buyer_context_health["health_pct"],
+                    seller_context_health=seller_context_health["health_pct"],
+                    simulation_day=self.current_day,
                 )
+                
+                # Record hallucination metric if it occurred
+                if hallucination_occurred and self._metrics_collector:
+                    await self._record_hallucination_metric(
+                        agent_id=request.buyer_id,
+                        agent_type="buyer",
+                        field="cpm",
+                        original_value=original_cpm,
+                        hallucinated_value=final_cpm,
+                        simulation_day=self.current_day,
+                    )
                 
                 return deal
         
@@ -454,8 +510,86 @@ class ScenarioB(BaseScenario):
             request_id=request.request_id,
             buyer_id=request.buyer_id,
             sellers_tried=len(target_sellers),
+            buyer_context_health=buyer_context_health["health_pct"],
+            simulation_day=self.current_day,
         )
         return None
+
+    def _get_agent_context_health(self, memory: AgentMemory) -> dict:
+        """
+        Calculate context health metrics for an agent.
+        
+        Health degrades based on:
+        - Simulation day (context rot accumulates)
+        - Number of deals/requests lost
+        - Config decay rate
+        
+        Returns:
+            Dict with health metrics:
+            - health_pct: 0-100 context retention percentage
+            - total_keys_lost: estimated keys lost based on decay
+            - current_keys: current memory size
+            - decay_factor: current decay multiplier
+        """
+        # Calculate decay based on simulation day
+        days_active = max(0, self.current_day - self.config.context_decay_rate)
+        decay_rate = self._context_rot.config.decay_rate
+        
+        # Survival rate formula: (1 - decay_rate) ^ days_active
+        # By day 30 with 2% decay: ~55% retention
+        survival_rate = (1 - decay_rate) ** days_active if days_active > 0 else 1.0
+        health_pct = survival_rate * 100
+        
+        # Count current memory items
+        current_keys = (
+            len(memory.deal_history) + 
+            len(memory.pending_requests) + 
+            len(memory.partner_reputation)
+        )
+        
+        # Estimate keys lost (approximate based on expected initial size)
+        initial_estimate = max(current_keys, 10)  # Assume at least 10 initial keys
+        estimated_lost = int(initial_estimate * (1 - survival_rate))
+        
+        return {
+            "health_pct": round(health_pct, 1),
+            "total_keys_lost": estimated_lost,
+            "current_keys": current_keys,
+            "decay_factor": round(1 - survival_rate, 4),
+            "simulation_day": self.current_day,
+            "survival_rate": round(survival_rate, 4),
+        }
+
+    async def _record_hallucination_metric(
+        self,
+        agent_id: str,
+        agent_type: str,
+        field: str,
+        original_value: float,
+        hallucinated_value: float,
+        simulation_day: int,
+    ) -> None:
+        """Record a hallucination event to metrics collector."""
+        if not self._metrics_collector:
+            return
+        
+        await self._metrics_collector.record(
+            metric_name="hallucination_event",
+            value=1,
+            tags={
+                "scenario": "B",
+                "agent_id": agent_id,
+                "agent_type": agent_type,
+                "field": field,
+                "simulation_day": simulation_day,
+            },
+            fields={
+                "original_value": original_value,
+                "hallucinated_value": hallucinated_value,
+                "delta": hallucinated_value - original_value,
+                "delta_pct": ((hallucinated_value - original_value) / original_value * 100) if original_value > 0 else 0,
+            },
+        )
 
     async def process_bid_response(
         self,
@@ -939,6 +1073,85 @@ class ScenarioB(BaseScenario):
     def get_hallucination_summary(self) -> dict:
         """Get summary of hallucination injection/detection."""
         return self._hallucination_mgr.get_summary()
+
+    def get_a2a_http_stats(self) -> dict:
+        """
+        Get A2A HTTP mode statistics.
+        
+        Returns stats on negotiations, context rot impact, and hallucinations
+        during A2A HTTP communications.
+        """
+        base_stats = {
+            "enabled": self._a2a_http_mode,
+            "base_port": self._a2a_base_port,
+            "sellers_configured": len(self._seller_adapters),
+        }
+        
+        if not self._a2a_manager:
+            return {**base_stats, "manager_active": False}
+        
+        manager_stats = self._a2a_manager.stats
+        
+        # Calculate context health across all agents
+        buyer_health = []
+        seller_health = []
+        
+        for buyer_id, memory in self._buyer_memories.items():
+            health = self._get_agent_context_health(memory)
+            buyer_health.append(health["health_pct"])
+        
+        for seller_id, memory in self._seller_memories.items():
+            health = self._get_agent_context_health(memory)
+            seller_health.append(health["health_pct"])
+        
+        avg_buyer_health = sum(buyer_health) / len(buyer_health) if buyer_health else 100.0
+        avg_seller_health = sum(seller_health) / len(seller_health) if seller_health else 100.0
+        
+        return {
+            **base_stats,
+            "manager_active": True,
+            # Negotiation stats
+            "negotiations_attempted": manager_stats["attempted"],
+            "negotiations_succeeded": manager_stats["succeeded"],
+            "success_rate": round(manager_stats["success_rate"] * 100, 1),
+            "avg_latency_ms": round(manager_stats["avg_latency_ms"], 2),
+            # Context health
+            "avg_buyer_context_health": round(avg_buyer_health, 1),
+            "avg_seller_context_health": round(avg_seller_health, 1),
+            "overall_context_health": round((avg_buyer_health + avg_seller_health) / 2, 1),
+            # Agent counts
+            "active_buyers": len(self._buyer_memories),
+            "active_sellers": len(self._seller_memories),
+            # Simulation state
+            "current_day": self.current_day,
+        }
+
+    def get_full_simulation_summary(self) -> dict:
+        """
+        Get comprehensive simulation summary including all metrics.
+        
+        This is the main method to call for final results.
+        """
+        return {
+            "scenario": "B",
+            "scenario_name": "IAB Pure A2A",
+            "simulation_day": self.current_day,
+            # Core metrics
+            "metrics": self.get_summary() if hasattr(self, 'get_summary') else {},
+            # Memory state
+            "memory": self.get_memory_summary(),
+            # Hallucinations
+            "hallucinations": self.get_hallucination_summary(),
+            # A2A HTTP stats (if enabled)
+            "a2a_http": self.get_a2a_http_stats(),
+            # Context rot summary
+            "context_rot": {
+                "total_events": self.metrics.context_rot_events if hasattr(self.metrics, 'context_rot_events') else 0,
+                "total_keys_lost": self.metrics.keys_lost_total if hasattr(self.metrics, 'keys_lost_total') else 0,
+                "recovery_enabled": False,  # Scenario B has no recovery
+                "recovery_accuracy": 0.0,
+            },
+        }
 
 
 # -----------------------------------------------------------------------------
