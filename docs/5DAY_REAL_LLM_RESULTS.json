@@ -1,0 +1,159 @@
+{
+  "start_time": "2026-01-30T11:32:22.528328",
+  "days": 5,
+  "mock_llm": true,
+  "scenarios": {
+    "A": {
+      "scenario": "A",
+      "name": "Rent-Seeking Exchange",
+      "days": 5,
+      "deals": 13,
+      "total_spend": 131376.0,
+      "total_fees": 19706.4,
+      "total_impressions": 13000000,
+      "context_rot_events": 0,
+      "hallucinations": 0,
+      "daily_results": [
+        {
+          "day": 1,
+          "deals": 3,
+          "spend": 33960.0,
+          "fees": 5094.0,
+          "impressions": 3000000
+        },
+        {
+          "day": 2,
+          "deals": 3,
+          "spend": 29264.0,
+          "fees": 4389.6,
+          "impressions": 3000000
+        },
+        {
+          "day": 3,
+          "deals": 4,
+          "spend": 45064.00000000001,
+          "fees": 6759.6,
+          "impressions": 4000000
+        },
+        {
+          "day": 4,
+          "deals": 2,
+          "spend": 18712.0,
+          "fees": 2806.7999999999997,
+          "impressions": 2000000
+        },
+        {
+          "day": 5,
+          "deals": 1,
+          "spend": 4376.0,
+          "fees": 656.4,
+          "impressions": 1000000
+        }
+      ]
+    },
+    "B": {
+      "scenario": "B",
+      "name": "Direct A2A",
+      "days": 5,
+      "deals": 7,
+      "total_spend": 36968.3266809683,
+      "total_fees": 0.0,
+      "total_impressions": 2352344,
+      "context_rot_events": 0,
+      "hallucinations": 0,
+      "daily_results": [
+        {
+          "day": 1,
+          "deals": 1,
+          "spend": 807.567053706859,
+          "impressions": 81407,
+          "context_rot": 0
+        },
+        {
+          "day": 2,
+          "deals": 0,
+          "spend": 0,
+          "impressions": 0,
+          "context_rot": 0
+        },
+        {
+          "day": 3,
+          "deals": 3,
+          "spend": 22105.394650501898,
+          "impressions": 1158428,
+          "context_rot": 0
+        },
+        {
+          "day": 4,
+          "deals": 2,
+          "spend": 9254.26796485695,
+          "impressions": 718078,
+          "context_rot": 0
+        },
+        {
+          "day": 5,
+          "deals": 1,
+          "spend": 4801.097011902595,
+          "impressions": 394431,
+          "context_rot": 0
+        }
+      ]
+    },
+    "C": {
+      "scenario": "C",
+      "name": "Alkimi Ledger-Backed",
+      "days": 5,
+      "deals": 18,
+      "total_spend": 62497.49014661615,
+      "total_fees": 0.0,
+      "blockchain_costs": 0.057000000000000016,
+      "total_impressions": 4637396,
+      "context_rot_events": 0,
+      "hallucinations": 0,
+      "recoveries": 0,
+      "daily_results": [
+        {
+          "day": 1,
+          "deals": 5,
+          "spend": 20043.383670671876,
+          "impressions": 1530023,
+          "blockchain_cost": 0.005,
+          "recoveries": 0
+        },
+        {
+          "day": 2,
+          "deals": 4,
+          "spend": 11548.629723808404,
+          "impressions": 1043102,
+          "blockchain_cost": 0.009000000000000001,
+          "recoveries": 0
+        },
+        {
+          "day": 3,
+          "deals": 1,
+          "spend": 3467.874293404613,
+          "impressions": 169484,
+          "blockchain_cost": 0.010000000000000002,
+          "recoveries": 0
+        },
+        {
+          "day": 4,
+          "deals": 5,
+          "spend": 15296.059027369154,
+          "impressions": 1198378,
+          "blockchain_cost": 0.015000000000000006,
+          "recoveries": 0
+        },
+        {
+          "day": 5,
+          "deals": 3,
+          "spend": 12141.543431362094,
+          "impressions": 696409,
+          "blockchain_cost": 0.01800000000000001,
+          "recoveries": 0
+        }
+      ]
+    }
+  },
+  "end_time": "2026-01-30T11:32:53.916981"
+}
