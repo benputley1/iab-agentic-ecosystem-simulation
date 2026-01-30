@@ -1,0 +1,195 @@
+/root/clawd/iab-sim-work/scripts/run_5day_comparison.py:435: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  start_time = datetime.utcnow()
+[1m
+============================================================[0m
+[1mGenerated 89 deal opportunities for 30 days[0m
+[1mBuyers: 3, Sellers: 3         [0m
+[1m============================================================
+[0m
+[1mredis.cleared                 [0m [36mkeys_deleted[0m=[35m0[0m
+[1m
+============================================================[0m
+[1mSCENARIO A: Rent-Seeking Exchange (15% fee)[0m
+[1m============================================================[0m
+[1mscenario_a.day_1              [0m [36mdeals[0m=[35m5[0m [36mfees[0m=[35m$2231.15[0m [36mspend[0m=[35m$14874.30[0m
+[1mscenario_a.day_2              [0m [36mdeals[0m=[35m3[0m [36mfees[0m=[35m$2416.18[0m [36mspend[0m=[35m$16107.89[0m
+[1mscenario_a.day_3              [0m [36mdeals[0m=[35m2[0m [36mfees[0m=[35m$931.39[0m [36mspend[0m=[35m$6209.24[0m
+[1mscenario_a.day_4              [0m [36mdeals[0m=[35m4[0m [36mfees[0m=[35m$2660.97[0m [36mspend[0m=[35m$17739.79[0m
+[1mscenario_a.day_5              [0m [36mdeals[0m=[35m4[0m [36mfees[0m=[35m$3992.68[0m [36mspend[0m=[35m$26617.87[0m
+[1mscenario_a.day_6              [0m [36mdeals[0m=[35m2[0m [36mfees[0m=[35m$2006.19[0m [36mspend[0m=[35m$13374.57[0m
+[1mscenario_a.day_7              [0m [36mdeals[0m=[35m4[0m [36mfees[0m=[35m$1702.89[0m [36mspend[0m=[35m$11352.58[0m
+[1mscenario_a.day_8              [0m [36mdeals[0m=[35m5[0m [36mfees[0m=[35m$5262.39[0m [36mspend[0m=[35m$35082.60[0m
+[1mscenario_a.day_9              [0m [36mdeals[0m=[35m1[0m [36mfees[0m=[35m$421.26[0m [36mspend[0m=[35m$2808.38[0m
+[1mscenario_a.day_10             [0m [36mdeals[0m=[35m1[0m [36mfees[0m=[35m$184.78[0m [36mspend[0m=[35m$1231.87[0m
+[1mscenario_a.day_11             [0m [36mdeals[0m=[35m5[0m [36mfees[0m=[35m$2563.31[0m [36mspend[0m=[35m$17088.70[0m
+[1mscenario_a.day_12             [0m [36mdeals[0m=[35m3[0m [36mfees[0m=[35m$1643.60[0m [36mspend[0m=[35m$10957.33[0m
+[1mscenario_a.day_13             [0m [36mdeals[0m=[35m3[0m [36mfees[0m=[35m$1051.68[0m [36mspend[0m=[35m$7011.22[0m
+[1mscenario_a.day_14             [0m [36mdeals[0m=[35m1[0m [36mfees[0m=[35m$600.11[0m [36mspend[0m=[35m$4000.71[0m
+[1mscenario_a.day_15             [0m [36mdeals[0m=[35m4[0m [36mfees[0m=[35m$3063.43[0m [36mspend[0m=[35m$20422.89[0m
+[1mscenario_a.day_16             [0m [36mdeals[0m=[35m4[0m [36mfees[0m=[35m$3578.13[0m [36mspend[0m=[35m$23854.19[0m
+[1mscenario_a.day_17             [0m [36mdeals[0m=[35m1[0m [36mfees[0m=[35m$694.28[0m [36mspend[0m=[35m$4628.51[0m
+[1mscenario_a.day_18             [0m [36mdeals[0m=[35m3[0m [36mfees[0m=[35m$1179.50[0m [36mspend[0m=[35m$7863.33[0m
+[1mscenario_a.day_19             [0m [36mdeals[0m=[35m5[0m [36mfees[0m=[35m$3581.79[0m [36mspend[0m=[35m$23878.61[0m
+[1mscenario_a.day_20             [0m [36mdeals[0m=[35m1[0m [36mfees[0m=[35m$423.00[0m [36mspend[0m=[35m$2819.99[0m
+[1mscenario_a.day_21             [0m [36mdeals[0m=[35m3[0m [36mfees[0m=[35m$2512.38[0m [36mspend[0m=[35m$16749.22[0m
+[1mscenario_a.day_22             [0m [36mdeals[0m=[35m3[0m [36mfees[0m=[35m$1241.94[0m [36mspend[0m=[35m$8279.57[0m
+[1mscenario_a.day_23             [0m [36mdeals[0m=[35m2[0m [36mfees[0m=[35m$854.38[0m [36mspend[0m=[35m$5695.85[0m
+[1mscenario_a.day_24             [0m [36mdeals[0m=[35m4[0m [36mfees[0m=[35m$2533.77[0m [36mspend[0m=[35m$16891.82[0m
+[1mscenario_a.day_25             [0m [36mdeals[0m=[35m1[0m [36mfees[0m=[35m$302.87[0m [36mspend[0m=[35m$2019.10[0m
+[1mscenario_a.day_26             [0m [36mdeals[0m=[35m3[0m [36mfees[0m=[35m$2393.08[0m [36mspend[0m=[35m$15953.86[0m
+[1mscenario_a.day_27             [0m [36mdeals[0m=[35m3[0m [36mfees[0m=[35m$2268.77[0m [36mspend[0m=[35m$15125.16[0m
+[1mscenario_a.day_28             [0m [36mdeals[0m=[35m3[0m [36mfees[0m=[35m$1878.69[0m [36mspend[0m=[35m$12524.61[0m
+[1mscenario_a.day_29             [0m [36mdeals[0m=[35m0[0m [36mfees[0m=[35m$0.00[0m [36mspend[0m=[35m$0.00[0m
+[1mscenario_a.day_30             [0m [36mdeals[0m=[35m6[0m [36mfees[0m=[35m$3003.94[0m [36mspend[0m=[35m$20026.27[0m
+[1mredis.cleared                 [0m [36mkeys_deleted[0m=[35m0[0m
+[1m
+============================================================[0m
+[1mSCENARIO B: Direct A2A Communication (context rot, hallucinations)[0m
+[1m============================================================[0m
+[1mscenario_b.day_1              [0m [36mcontext_integrity[0m=[35m100.0%[0m [36mdeals[0m=[35m4[0m [36mfailed[0m=[35m1[0m [36mhallucinations[0m=[35m2[0m [36mspend[0m=[35m$8539.77[0m
+[1mscenario_b.day_2              [0m [36mcontext_integrity[0m=[35m95.0%[0m [36mdeals[0m=[35m3[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$16107.89[0m
+[1mscenario_b.day_3              [0m [36mcontext_integrity[0m=[35m90.2%[0m [36mdeals[0m=[35m2[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$6209.24[0m
+[1mscenario_b.day_4              [0m [36mcontext_integrity[0m=[35m85.7%[0m [36mdeals[0m=[35m4[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m2[0m [36mspend[0m=[35m$18576.49[0m
+[1mscenario_b.day_5              [0m [36mcontext_integrity[0m=[35m81.5%[0m [36mdeals[0m=[35m3[0m [36mfailed[0m=[35m1[0m [36mhallucinations[0m=[35m2[0m [36mspend[0m=[35m$20170.12[0m
+[1mscenario_b.day_6              [0m [36mcontext_integrity[0m=[35m77.4%[0m [36mdeals[0m=[35m2[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$13374.57[0m
+[1mscenario_b.day_7              [0m [36mcontext_integrity[0m=[35m73.5%[0m [36mdeals[0m=[35m4[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$11352.58[0m
+[1mscenario_b.day_8              [0m [36mcontext_integrity[0m=[35m69.8%[0m [36mdeals[0m=[35m5[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$35082.60[0m
+[1mscenario_b.day_9              [0m [36mcontext_integrity[0m=[35m66.3%[0m [36mdeals[0m=[35m1[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$2808.38[0m
+[1mscenario_b.day_10             [0m [36mcontext_integrity[0m=[35m63.0%[0m [36mdeals[0m=[35m1[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$1231.87[0m
+[1mscenario_b.day_11             [0m [36mcontext_integrity[0m=[35m59.9%[0m [36mdeals[0m=[35m5[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$17088.70[0m
+[1mscenario_b.day_12             [0m [36mcontext_integrity[0m=[35m56.9%[0m [36mdeals[0m=[35m2[0m [36mfailed[0m=[35m1[0m [36mhallucinations[0m=[35m1[0m [36mspend[0m=[35m$6330.16[0m
+[1mscenario_b.day_13             [0m [36mcontext_integrity[0m=[35m54.0%[0m [36mdeals[0m=[35m3[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$7011.22[0m
+[1mscenario_b.day_14             [0m [36mcontext_integrity[0m=[35m51.3%[0m [36mdeals[0m=[35m1[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$4000.71[0m
+[1mscenario_b.day_15             [0m [36mcontext_integrity[0m=[35m48.8%[0m [36mdeals[0m=[35m4[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m1[0m [36mspend[0m=[35m$22351.08[0m
+[1mscenario_b.day_16             [0m [36mcontext_integrity[0m=[35m46.3%[0m [36mdeals[0m=[35m3[0m [36mfailed[0m=[35m1[0m [36mhallucinations[0m=[35m2[0m [36mspend[0m=[35m$17905.96[0m
+[1mscenario_b.day_17             [0m [36mcontext_integrity[0m=[35m44.0%[0m [36mdeals[0m=[35m1[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$4628.51[0m
+[1mscenario_b.day_18             [0m [36mcontext_integrity[0m=[35m41.8%[0m [36mdeals[0m=[35m3[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$7863.33[0m
+[1mscenario_b.day_19             [0m [36mcontext_integrity[0m=[35m39.7%[0m [36mdeals[0m=[35m5[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$23878.61[0m
+[1mscenario_b.day_20             [0m [36mcontext_integrity[0m=[35m37.7%[0m [36mdeals[0m=[35m1[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$2819.99[0m
+[1mscenario_b.day_21             [0m [36mcontext_integrity[0m=[35m35.8%[0m [36mdeals[0m=[35m3[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m1[0m [36mspend[0m=[35m$17969.94[0m
+[1mscenario_b.day_22             [0m [36mcontext_integrity[0m=[35m34.1%[0m [36mdeals[0m=[35m3[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$8279.57[0m
+[1mscenario_b.day_23             [0m [36mcontext_integrity[0m=[35m32.4%[0m [36mdeals[0m=[35m2[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$5695.85[0m
+[1mscenario_b.day_24             [0m [36mcontext_integrity[0m=[35m30.7%[0m [36mdeals[0m=[35m3[0m [36mfailed[0m=[35m1[0m [36mhallucinations[0m=[35m3[0m [36mspend[0m=[35m$14425.61[0m
+[1mscenario_b.day_25             [0m [36mcontext_integrity[0m=[35m29.2%[0m [36mdeals[0m=[35m1[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$2019.10[0m
+[1mscenario_b.day_26             [0m [36mcontext_integrity[0m=[35m27.7%[0m [36mdeals[0m=[35m3[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$15953.86[0m
+[1mscenario_b.day_27             [0m [36mcontext_integrity[0m=[35m26.4%[0m [36mdeals[0m=[35m3[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$15125.16[0m
+[1mscenario_b.day_28             [0m [36mcontext_integrity[0m=[35m25.0%[0m [36mdeals[0m=[35m3[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$12524.61[0m
+[1mscenario_b.day_29             [0m [36mcontext_integrity[0m=[35m23.8%[0m [36mdeals[0m=[35m0[0m [36mfailed[0m=[35m0[0m [36mhallucinations[0m=[35m0[0m [36mspend[0m=[35m$0.00[0m
+[1mscenario_b.day_30             [0m [36mcontext_integrity[0m=[35m22.6%[0m [36mdeals[0m=[35m5[0m [36mfailed[0m=[35m1[0m [36mhallucinations[0m=[35m1[0m [36mspend[0m=[35m$16962.71[0m
+[1mredis.cleared                 [0m [36mkeys_deleted[0m=[35m0[0m
+[1m
+============================================================[0m
+[1mSCENARIO C: Alkimi Ledger-Backed (5% fee, zero context rot)[0m
+[1m============================================================[0m
+[1mredis_bus.connected           [0m [36mconsumer_id[0m=[35mscenario-C[0m [36murl[0m=[35mredis://localhost:6379[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35mbuyers-group[0m [36mstream[0m=[35mrtb:requests[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35msellers-group[0m [36mstream[0m=[35mrtb:requests[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35mexchange-group[0m [36mstream[0m=[35mrtb:requests[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35manalytics-group[0m [36mstream[0m=[35mrtb:requests[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35mbuyers-group[0m [36mstream[0m=[35mrtb:responses[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35msellers-group[0m [36mstream[0m=[35mrtb:responses[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35mexchange-group[0m [36mstream[0m=[35mrtb:responses[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35manalytics-group[0m [36mstream[0m=[35mrtb:responses[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35mbuyers-group[0m [36mstream[0m=[35mrtb:deals[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35msellers-group[0m [36mstream[0m=[35mrtb:deals[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35mexchange-group[0m [36mstream[0m=[35mrtb:deals[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35manalytics-group[0m [36mstream[0m=[35mrtb:deals[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35mbuyers-group[0m [36mstream[0m=[35mrtb:events[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35msellers-group[0m [36mstream[0m=[35mrtb:events[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35mexchange-group[0m [36mstream[0m=[35mrtb:events[0m
+[1mredis_bus.group_created       [0m [36mgroup[0m=[35manalytics-group[0m [36mstream[0m=[35mrtb:events[0m
+[1mground_truth.connected        [0m [36mdsn[0m=[35mpostgresql://doadmin:AVNS_Yxkc...[0m
+[1mscenario.ground_truth_connected[0m [36mscenario_id[0m=[35mC[0m
+[1mscenario_c.connected          [0m [36mhas_ground_truth[0m=[35mTrue[0m [36mhas_ledger[0m=[35mTrue[0m
+[1mscenario_c.day_1              [0m [36malkimi_fee[0m=[35m$743.72[0m [36mblockchain[0m=[35m$0.0050[0m [36mdeals[0m=[35m5[0m [36mspend[0m=[35m$14874.30[0m
+[1mscenario_c.day_2              [0m [36malkimi_fee[0m=[35m$805.39[0m [36mblockchain[0m=[35m$0.0030[0m [36mdeals[0m=[35m3[0m [36mspend[0m=[35m$16107.89[0m
+[1mscenario_c.day_3              [0m [36malkimi_fee[0m=[35m$310.46[0m [36mblockchain[0m=[35m$0.0020[0m [36mdeals[0m=[35m2[0m [36mspend[0m=[35m$6209.24[0m
+[1mscenario_c.day_4              [0m [36malkimi_fee[0m=[35m$886.99[0m [36mblockchain[0m=[35m$0.0040[0m [36mdeals[0m=[35m4[0m [36mspend[0m=[35m$17739.79[0m
+[1mscenario_c.day_5              [0m [36malkimi_fee[0m=[35m$1330.89[0m [36mblockchain[0m=[35m$0.0040[0m [36mdeals[0m=[35m4[0m [36mspend[0m=[35m$26617.87[0m
+[1mscenario_c.day_6              [0m [36malkimi_fee[0m=[35m$668.73[0m [36mblockchain[0m=[35m$0.0020[0m [36mdeals[0m=[35m2[0m [36mspend[0m=[35m$13374.57[0m
+[1mscenario_c.day_7              [0m [36malkimi_fee[0m=[35m$567.63[0m [36mblockchain[0m=[35m$0.0040[0m [36mdeals[0m=[35m4[0m [36mspend[0m=[35m$11352.58[0m
+[1mscenario_c.day_8              [0m [36malkimi_fee[0m=[35m$1754.13[0m [36mblockchain[0m=[35m$0.0050[0m [36mdeals[0m=[35m5[0m [36mspend[0m=[35m$35082.60[0m
+[1mscenario_c.day_9              [0m [36malkimi_fee[0m=[35m$140.42[0m [36mblockchain[0m=[35m$0.0010[0m [36mdeals[0m=[35m1[0m [36mspend[0m=[35m$2808.38[0m
+[1mscenario_c.day_10             [0m [36malkimi_fee[0m=[35m$61.59[0m [36mblockchain[0m=[35m$0.0010[0m [36mdeals[0m=[35m1[0m [36mspend[0m=[35m$1231.87[0m
+[1mscenario_c.day_11             [0m [36malkimi_fee[0m=[35m$854.44[0m [36mblockchain[0m=[35m$0.0050[0m [36mdeals[0m=[35m5[0m [36mspend[0m=[35m$17088.70[0m
+[1mscenario_c.day_12             [0m [36malkimi_fee[0m=[35m$547.87[0m [36mblockchain[0m=[35m$0.0030[0m [36mdeals[0m=[35m3[0m [36mspend[0m=[35m$10957.33[0m
+[1mscenario_c.day_13             [0m [36malkimi_fee[0m=[35m$350.56[0m [36mblockchain[0m=[35m$0.0030[0m [36mdeals[0m=[35m3[0m [36mspend[0m=[35m$7011.22[0m
+[1mscenario_c.day_14             [0m [36malkimi_fee[0m=[35m$200.04[0m [36mblockchain[0m=[35m$0.0010[0m [36mdeals[0m=[35m1[0m [36mspend[0m=[35m$4000.71[0m
+[1mscenario_c.day_15             [0m [36malkimi_fee[0m=[35m$1021.14[0m [36mblockchain[0m=[35m$0.0040[0m [36mdeals[0m=[35m4[0m [36mspend[0m=[35m$20422.89[0m
+[1mscenario_c.day_16             [0m [36malkimi_fee[0m=[35m$1192.71[0m [36mblockchain[0m=[35m$0.0040[0m [36mdeals[0m=[35m4[0m [36mspend[0m=[35m$23854.19[0m
+[1mscenario_c.day_17             [0m [36malkimi_fee[0m=[35m$231.43[0m [36mblockchain[0m=[35m$0.0010[0m [36mdeals[0m=[35m1[0m [36mspend[0m=[35m$4628.51[0m
+[1mscenario_c.day_18             [0m [36malkimi_fee[0m=[35m$393.17[0m [36mblockchain[0m=[35m$0.0030[0m [36mdeals[0m=[35m3[0m [36mspend[0m=[35m$7863.33[0m
+[1mscenario_c.day_19             [0m [36malkimi_fee[0m=[35m$1193.93[0m [36mblockchain[0m=[35m$0.0050[0m [36mdeals[0m=[35m5[0m [36mspend[0m=[35m$23878.61[0m
+[1mscenario_c.day_20             [0m [36malkimi_fee[0m=[35m$141.00[0m [36mblockchain[0m=[35m$0.0010[0m [36mdeals[0m=[35m1[0m [36mspend[0m=[35m$2819.99[0m
+[1mscenario_c.day_21             [0m [36malkimi_fee[0m=[35m$837.46[0m [36mblockchain[0m=[35m$0.0030[0m [36mdeals[0m=[35m3[0m [36mspend[0m=[35m$16749.22[0m
+[1mscenario_c.day_22             [0m [36malkimi_fee[0m=[35m$413.98[0m [36mblockchain[0m=[35m$0.0030[0m [36mdeals[0m=[35m3[0m [36mspend[0m=[35m$8279.57[0m
+[1mscenario_c.day_23             [0m [36malkimi_fee[0m=[35m$284.79[0m [36mblockchain[0m=[35m$0.0020[0m [36mdeals[0m=[35m2[0m [36mspend[0m=[35m$5695.85[0m
+[1mscenario_c.day_24             [0m [36malkimi_fee[0m=[35m$844.59[0m [36mblockchain[0m=[35m$0.0040[0m [36mdeals[0m=[35m4[0m [36mspend[0m=[35m$16891.82[0m
+[1mscenario_c.day_25             [0m [36malkimi_fee[0m=[35m$100.96[0m [36mblockchain[0m=[35m$0.0010[0m [36mdeals[0m=[35m1[0m [36mspend[0m=[35m$2019.10[0m
+[1mscenario_c.day_26             [0m [36malkimi_fee[0m=[35m$797.69[0m [36mblockchain[0m=[35m$0.0030[0m [36mdeals[0m=[35m3[0m [36mspend[0m=[35m$15953.86[0m
+[1mscenario_c.day_27             [0m [36malkimi_fee[0m=[35m$756.26[0m [36mblockchain[0m=[35m$0.0030[0m [36mdeals[0m=[35m3[0m [36mspend[0m=[35m$15125.16[0m
+[1mscenario_c.day_28             [0m [36malkimi_fee[0m=[35m$626.23[0m [36mblockchain[0m=[35m$0.0030[0m [36mdeals[0m=[35m3[0m [36mspend[0m=[35m$12524.61[0m
+[1mscenario_c.day_29             [0m [36malkimi_fee[0m=[35m$0.00[0m [36mblockchain[0m=[35m$0.0000[0m [36mdeals[0m=[35m0[0m [36mspend[0m=[35m$0.00[0m
+[1mscenario_c.day_30             [0m [36malkimi_fee[0m=[35m$1001.31[0m [36mblockchain[0m=[35m$0.0060[0m [36mdeals[0m=[35m6[0m [36mspend[0m=[35m$20026.27[0m
+[1mredis_bus.disconnected        [0m
+[1mground_truth.disconnected     [0m
+[1mscenario_c.disconnected       [0m
+/root/clawd/iab-sim-work/scripts/run_5day_comparison.py:488: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  results["end_time"] = datetime.utcnow().isoformat()
+
+==========================================================================================
+30-DAY SIMULATION COMPARISON
+==========================================================================================
+Mode: Real LLM
+Days: 30
+Deal Opportunities: 89
+
+----------------------------------------------------------------------------------------------------------------------------
+| Metric                 | Scenario A                  | Scenario B                        | Scenario C                    |
+----------------------------------------------------------------------------------------------------------------------------
+| Name                   | Rent-Seeking Exchange (15%) | Direct A2A (0% fees, context rot) | Alkimi Ledger-Backed (5% fee) |
+| Fee Structure          | 15% exchange                | 0% (but hallucination costs)      | 5% Alkimi + blockchain        |
+| Deal Opportunities     | 89                          | 89                                | 89                            |
+| Successful Deals       | 89                          | 83                                | 89                            |
+| Failed Deals           | 0                           | 6                                 | 0                             |
+| Total Spend            | $381,190.03                 | $356,288.20                       | $381,190.03                   |
+| Platform/Exchange Fees | $57,178.50                  | $0.00                             | $19,059.50                    |
+| Blockchain Costs       | N/A                         | N/A                               | $0.09                         |
+| Hallucination Costs    | N/A                         | $7,990.97                         | $0.00                         |
+| TOTAL OVERHEAD COST    | $57,178.50                  | $7,990.97                         | $19,059.59                    |
+| Overhead Rate          | 15.0%                       | 2.24%                             | 5.00%                         |
+| Total Impressions      | 26,733,395                  | 24,655,430                        | 26,733,395                    |
+| Average CPM            | $14.26                      | $14.45                            | $14.26                        |
+| Context Rot Events     | N/A (centralized)           | 29                                | 0 (ledger-backed)             |
+| Hallucinations         | N/A                         | 15                                | 0 (ground truth)              |
+| Recovery Success Rate  | N/A                         | 0% (no recovery)                  | 100% (ledger)                 |
+----------------------------------------------------------------------------------------------------------------------------
+
+==========================================================================================
+KEY FINDINGS
+==========================================================================================
+1. Fee Savings: Alkimi (C) saves $38,118.91 (66.7%) vs Traditional (A)
+   - Scenario A fees: $57,178.50 (15% of spend)
+   - Scenario C fees: $19,059.59 (5% + blockchain)
+
+2. Context Rot: Scenario B had 29 events, Scenario C had 0 events
+   - Direct A2A loses context integrity over time without ledger
+
+3. Hallucinations & Failures (Scenario B):
+   - 15 hallucinated decisions
+   - 6 failed deals
+   - $7,990.97 in overpayment costs
+
+4. Net Cost Comparison (fees + error costs):
+   - Scenario A: $57,178.50 (all fees)
+   - Scenario B: $7,990.97 (hallucination costs only)
+   - Scenario C: $19,059.59 (Alkimi fees + blockchain)
+
+5. WINNER: Scenario B
+
+==========================================================================================
+✅ THESIS VALIDATED: Ledger-backed agents (Scenario C) show ZERO context rot
+   and ZERO hallucinations while maintaining 67% lower fees than traditional exchanges.
+==========================================================================================
+
+[1mResults saved to docs/30DAY_REAL_LLM_FINAL.json[0m
