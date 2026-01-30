@@ -50,6 +50,25 @@ from .reconciliation import (
     ResolutionOutcome,
 )
 
+# Multi-Agent Hierarchy Scenarios
+from .multi_agent_scenario_a import (
+    MultiAgentScenarioA,
+    MultiAgentScenarioAConfig,
+    DealCycleResult,
+)
+from .multi_agent_scenario_b import (
+    MultiAgentScenarioB,
+    MultiAgentScenarioBConfig,
+    DirectDealResult,
+)
+from .multi_agent_scenario_c import (
+    MultiAgentScenarioC,
+    MultiAgentScenarioCConfig,
+    LedgerClient,
+    LedgerState,
+    LedgerDealResult,
+)
+
 __all__ = [
     # Base classes
     "BaseScenario",
@@ -72,4 +91,16 @@ __all__ = [
     "CampaignRecord",
     "DiscrepancySource",
     "ResolutionOutcome",
+    # Multi-Agent Hierarchy Scenarios
+    "MultiAgentScenarioA",
+    "MultiAgentScenarioAConfig",
+    "DealCycleResult",
+    "MultiAgentScenarioB",
+    "MultiAgentScenarioBConfig",
+    "DirectDealResult",
+    "MultiAgentScenarioC",
+    "MultiAgentScenarioCConfig",
+    "LedgerClient",
+    "LedgerState",
+    "LedgerDealResult",
 ]
