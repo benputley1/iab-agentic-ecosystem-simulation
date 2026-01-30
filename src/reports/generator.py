@@ -21,8 +21,8 @@ from ..metrics.kpis import (
     BlockchainCostMetrics,
 )
 from ..metrics.collector import InfluxConfig
-from ..logging.events import EventIndex, Scenario
-from ..logging.comparison import ComparisonAnalyzer, ComparisonReport
+from ..sim_logging.events import EventIndex, Scenario
+from ..sim_logging.comparison import ComparisonAnalyzer, ComparisonReport
 
 
 class ReportFormat(str, Enum):

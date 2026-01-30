@@ -1,48 +1,37 @@
 """
-Hallucination detection and classification for agent decisions.
+Hallucination detection and classification for RTB simulation.
 
-This module provides tools to detect when AI agents make decisions
-based on hallucinated or misremembered information during ad bidding
-simulations.
-
-Usage:
-    from hallucination import HallucinationClassifier, HallucinationType
-    from hallucination.types import AgentDecision, Hallucination
-    
-    classifier = HallucinationClassifier(ground_truth_db)
-    result = classifier.check_decision(decision)
-    
-    if result.has_hallucinations:
-        for error in result.errors:
-            print(f"{error.type.value}: severity {error.severity:.2f}")
+This module provides tools to detect, classify, and track hallucinations
+in agent decisions - errors caused by context window limitations,
+memory loss, or other AI reliability issues.
 """
 
 from .classifier import (
-    ClassifierStats,
+    HallucinationType,
+    Hallucination,
+    HallucinationResult,
     HallucinationClassifier,
+    AgentDecisionForCheck,
     SeverityThresholds,
 )
+
+# Re-export types from types.py for backwards compatibility
 from .types import (
     AgentDecision,
     CampaignState,
     GroundTruthDBProtocol,
-    Hallucination,
-    HallucinationResult,
-    HallucinationType,
 )
 
 __all__ = [
-    # Enums
+    # From classifier.py
     "HallucinationType",
-    # Dataclasses
-    "AgentDecision",
-    "CampaignState",
     "Hallucination",
     "HallucinationResult",
-    "SeverityThresholds",
-    "ClassifierStats",
-    # Protocols
-    "GroundTruthDBProtocol",
-    # Classes
     "HallucinationClassifier",
+    "AgentDecisionForCheck",
+    "SeverityThresholds",
+    # From types.py (backwards compat)
+    "AgentDecision",
+    "CampaignState",
+    "GroundTruthDBProtocol",
 ]
