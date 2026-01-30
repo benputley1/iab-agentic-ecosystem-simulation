@@ -11,7 +11,7 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
 from .sim_client import SimulationClient, InventoryItem
-from ....infrastructure.message_schemas import DealType
+from infrastructure.message_schemas import DealType
 
 
 # -----------------------------------------------------------------------------

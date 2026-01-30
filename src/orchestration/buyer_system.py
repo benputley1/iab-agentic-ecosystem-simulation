@@ -17,17 +17,17 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Optional
 
-from ..agents.buyer.l1_portfolio_manager import PortfolioManager, create_portfolio_manager
-from ..agents.buyer.l2_performance import PerformanceSpecialist
-from ..agents.buyer.l2_branding import BrandingSpecialist
-from ..agents.buyer.l2_ctv import CTVSpecialist
-from ..agents.buyer.l2_mobile_app import MobileAppSpecialist
-from ..agents.buyer.l2_dsp import DSPSpecialist
-from ..agents.buyer.l3_research import ResearchAgent
-from ..agents.buyer.l3_execution import ExecutionAgent
-from ..agents.buyer.l3_reporting import ReportingAgent
-from ..agents.buyer.l3_audience_planner import AudiencePlannerAgent
-from ..agents.buyer.models import (
+from agents.buyer.l1_portfolio_manager import PortfolioManager, create_portfolio_manager
+from agents.buyer.l2_performance import PerformanceSpecialist
+from agents.buyer.l2_branding import BrandingSpecialist
+from agents.buyer.l2_ctv import CTVSpecialist
+from agents.buyer.l2_mobile_app import MobileAppSpecialist
+from agents.buyer.l2_dsp import DSPSpecialist
+from agents.buyer.l3_research import ResearchAgent
+from agents.buyer.l3_execution import ExecutionAgent
+from agents.buyer.l3_reporting import ReportingAgent
+from agents.buyer.l3_audience_planner import AudiencePlannerAgent
+from agents.buyer.models import (
     Campaign,
     CampaignObjectives,
     CampaignStatus,
@@ -39,7 +39,7 @@ from ..agents.buyer.models import (
     SpecialistResult,
     Channel,
 )
-from ..protocols.inter_level import (
+from protocols.inter_level import (
     InterLevelProtocol,
     AgentContext,
     Task,
@@ -486,25 +486,21 @@ class BuyerAgentSystem:
         for specialist in self._l2_specialists.values():
             await specialist.initialize()
         
-        # Create L3 Functional Agents
+        # Create L3 Functional Agents with proper context
+        from agents.buyer.l3_base import AgentContext as L3AgentContext
+        l3_context = L3AgentContext(
+            buyer_id=self.buyer_id,
+            scenario=self.scenario,
+        )
+        
         self._l3_functional = {
-            "research": ResearchAgent(
-                agent_id=f"{self.buyer_id}-l3-research",
-            ),
-            "execution": ExecutionAgent(
-                agent_id=f"{self.buyer_id}-l3-execution",
-            ),
-            "reporting": ReportingAgent(
-                agent_id=f"{self.buyer_id}-l3-reporting",
-            ),
-            "audience": AudiencePlannerAgent(
-                agent_id=f"{self.buyer_id}-l3-audience",
-            ),
+            "research": ResearchAgent(context=l3_context),
+            "execution": ExecutionAgent(context=l3_context),
+            "reporting": ReportingAgent(context=l3_context),
+            "audience": AudiencePlannerAgent(context=l3_context),
         }
         
-        # Initialize L3 agents
-        for agent in self._l3_functional.values():
-            await agent.initialize()
+        # L3 agents don't need explicit initialization
         
         # Create inter-level protocols
         self._protocols[1] = InterLevelProtocol(

@@ -1,0 +1,883 @@
+{
+  "start_time": "2026-01-30T13:35:09.347465",
+  "days": 30,
+  "real_llm": true,
+  "test_mode": false,
+  "num_buyers": 3,
+  "num_sellers": 3,
+  "total_opportunities": 93,
+  "scenarios": {
+    "A": {
+      "scenario": "A",
+      "name": "Rent-Seeking Exchange (15%)",
+      "fee_pct": 15.0,
+      "deals": 93,
+      "deal_opportunities": 93,
+      "total_spend": 443360.6403578814,
+      "total_fees": 66504.09605368218,
+      "total_impressions": 25014604,
+      "context_rot_events": 0,
+      "hallucinations": 0,
+      "hallucination_cost": 0.0,
+      "failed_deals": 0,
+      "daily_results": [
+        {
+          "day": 1,
+          "deals": 5,
+          "spend": 20015.12996290188,
+          "fees": 3002.2694944352816,
+          "impressions": 889891
+        },
+        {
+          "day": 2,
+          "deals": 6,
+          "spend": 26431.842833899704,
+          "fees": 3964.7764250849555,
+          "impressions": 1646101
+        },
+        {
+          "day": 3,
+          "deals": 1,
+          "spend": 2547.410810302646,
+          "fees": 382.1116215453969,
+          "impressions": 189973
+        },
+        {
+          "day": 4,
+          "deals": 5,
+          "spend": 31175.41941914573,
+          "fees": 4676.312912871859,
+          "impressions": 1882353
+        },
+        {
+          "day": 5,
+          "deals": 3,
+          "spend": 12906.996001345684,
+          "fees": 1936.0494002018527,
+          "impressions": 786180
+        },
+        {
+          "day": 6,
+          "deals": 3,
+          "spend": 17435.081897171873,
+          "fees": 2615.2622845757805,
+          "impressions": 780319
+        },
+        {
+          "day": 7,
+          "deals": 4,
+          "spend": 17711.303732919456,
+          "fees": 2656.695559937918,
+          "impressions": 980382
+        },
+        {
+          "day": 8,
+          "deals": 3,
+          "spend": 20549.116663971294,
+          "fees": 3082.3674995956935,
+          "impressions": 1026097
+        },
+        {
+          "day": 9,
+          "deals": 2,
+          "spend": 16035.677599359738,
+          "fees": 2405.351639903961,
+          "impressions": 610101
+        },
+        {
+          "day": 10,
+          "deals": 3,
+          "spend": 8434.679653110155,
+          "fees": 1265.2019479665232,
+          "impressions": 615623
+        },
+        {
+          "day": 11,
+          "deals": 4,
+          "spend": 14071.308271057136,
+          "fees": 2110.6962406585703,
+          "impressions": 642874
+        },
+        {
+          "day": 12,
+          "deals": 4,
+          "spend": 7515.999951688574,
+          "fees": 1127.399992753286,
+          "impressions": 419202
+        },
+        {
+          "day": 13,
+          "deals": 3,
+          "spend": 21050.719542482657,
+          "fees": 3157.6079313723985,
+          "impressions": 910009
+        },
+        {
+          "day": 14,
+          "deals": 4,
+          "spend": 17344.924506039857,
+          "fees": 2601.7386759059787,
+          "impressions": 898471
+        },
+        {
+          "day": 15,
+          "deals": 3,
+          "spend": 10177.283373730586,
+          "fees": 1526.5925060595878,
+          "impressions": 738436
+        },
+        {
+          "day": 16,
+          "deals": 3,
+          "spend": 14392.591770050638,
+          "fees": 2158.8887655075955,
+          "impressions": 592558
+        },
+        {
+          "day": 17,
+          "deals": 2,
+          "spend": 8461.439016752212,
+          "fees": 1269.2158525128318,
+          "impressions": 532352
+        },
+        {
+          "day": 18,
+          "deals": 3,
+          "spend": 14083.51941581813,
+          "fees": 2112.5279123727196,
+          "impressions": 930336
+        },
+        {
+          "day": 19,
+          "deals": 4,
+          "spend": 24759.69622102371,
+          "fees": 3713.9544331535562,
+          "impressions": 1111911
+        },
+        {
+          "day": 20,
+          "deals": 2,
+          "spend": 11245.316328992136,
+          "fees": 1686.79744934882,
+          "impressions": 911248
+        },
+        {
+          "day": 21,
+          "deals": 2,
+          "spend": 7741.0607599093055,
+          "fees": 1161.1591139863958,
+          "impressions": 584799
+        },
+        {
+          "day": 22,
+          "deals": 3,
+          "spend": 9376.182153108237,
+          "fees": 1406.4273229662354,
+          "impressions": 607624
+        },
+        {
+          "day": 23,
+          "deals": 4,
+          "spend": 27828.64738581385,
+          "fees": 4174.297107872077,
+          "impressions": 1342484
+        },
+        {
+          "day": 24,
+          "deals": 2,
+          "spend": 9530.892701739318,
+          "fees": 1429.6339052608978,
+          "impressions": 798257
+        },
+        {
+          "day": 25,
+          "deals": 1,
+          "spend": 6198.204172049059,
+          "fees": 929.7306258073588,
+          "impressions": 461963
+        },
+        {
+          "day": 26,
+          "deals": 4,
+          "spend": 19331.269935976896,
+          "fees": 2899.690490396534,
+          "impressions": 1159965
+        },
+        {
+          "day": 27,
+          "deals": 1,
+          "spend": 7358.301783735385,
+          "fees": 1103.7452675603076,
+          "impressions": 443721
+        },
+        {
+          "day": 28,
+          "deals": 2,
+          "spend": 6616.9891358149225,
+          "fees": 992.5483703722383,
+          "impressions": 476330
+        },
+        {
+          "day": 29,
+          "deals": 2,
+          "spend": 16640.88161010386,
+          "fees": 2496.132241515579,
+          "impressions": 901872
+        },
+        {
+          "day": 30,
+          "deals": 5,
+          "spend": 16392.753747866613,
+          "fees": 2458.9130621799914,
+          "impressions": 1143172
+        }
+      ],
+      "api_cost_usd": 0.0,
+      "avg_cpm": 17.724071920462197
+    },
+    "B": {
+      "scenario": "B",
+      "name": "Direct A2A (Real LLM, context rot)",
+      "fee_pct": 0.0,
+      "deals": 93,
+      "deal_opportunities": 93,
+      "total_spend": 466741.79174999986,
+      "total_fees": 0.0,
+      "total_impressions": 25014604,
+      "context_rot_events": 29,
+      "hallucinations": 0,
+      "hallucination_cost": 0.0,
+      "failed_deals": 0,
+      "daily_results": [
+        {
+          "day": 1,
+          "deals": 5,
+          "spend": 14969.625500000002,
+          "impressions": 889891,
+          "context_limit": 50,
+          "context_integrity": 1.0,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 2,
+          "deals": 6,
+          "spend": 26498.351,
+          "impressions": 1646101,
+          "context_limit": 47,
+          "context_integrity": 0.95,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 3,
+          "deals": 1,
+          "spend": 3277.03425,
+          "impressions": 189973,
+          "context_limit": 45,
+          "context_integrity": 0.9,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 4,
+          "deals": 5,
+          "spend": 29432.4015,
+          "impressions": 1882353,
+          "context_limit": 42,
+          "context_integrity": 0.85,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 5,
+          "deals": 3,
+          "spend": 12097.697,
+          "impressions": 786180,
+          "context_limit": 40,
+          "context_integrity": 0.8,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 6,
+          "deals": 3,
+          "spend": 13495.215,
+          "impressions": 780319,
+          "context_limit": 37,
+          "context_integrity": 0.75,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 7,
+          "deals": 4,
+          "spend": 16329.125,
+          "impressions": 980382,
+          "context_limit": 35,
+          "context_integrity": 0.7,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 8,
+          "deals": 3,
+          "spend": 19463.06575,
+          "impressions": 1026097,
+          "context_limit": 32,
+          "context_integrity": 0.6499999999999999,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 9,
+          "deals": 2,
+          "spend": 11795.8035,
+          "impressions": 610101,
+          "context_limit": 30,
+          "context_integrity": 0.6,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 10,
+          "deals": 3,
+          "spend": 10084.5,
+          "impressions": 615623,
+          "context_limit": 27,
+          "context_integrity": 0.55,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 11,
+          "deals": 4,
+          "spend": 12862.64225,
+          "impressions": 642874,
+          "context_limit": 25,
+          "context_integrity": 0.5,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 12,
+          "deals": 4,
+          "spend": 7292.128000000001,
+          "impressions": 419202,
+          "context_limit": 22,
+          "context_integrity": 0.44999999999999996,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 13,
+          "deals": 3,
+          "spend": 17124.84,
+          "impressions": 910009,
+          "context_limit": 19,
+          "context_integrity": 0.3999999999999999,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 14,
+          "deals": 4,
+          "spend": 17300.829999999998,
+          "impressions": 898471,
+          "context_limit": 17,
+          "context_integrity": 0.35,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 15,
+          "deals": 3,
+          "spend": 12083.595,
+          "impressions": 738436,
+          "context_limit": 14,
+          "context_integrity": 0.29999999999999993,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 16,
+          "deals": 3,
+          "spend": 11608.76975,
+          "impressions": 592558,
+          "context_limit": 12,
+          "context_integrity": 0.25,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 17,
+          "deals": 2,
+          "spend": 10436.131250000002,
+          "impressions": 532352,
+          "context_limit": 9,
+          "context_integrity": 0.19999999999999996,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 18,
+          "deals": 3,
+          "spend": 18069.17125,
+          "impressions": 930336,
+          "context_limit": 7,
+          "context_integrity": 0.1499999999999999,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 19,
+          "deals": 4,
+          "spend": 24318.756,
+          "impressions": 1111911,
+          "context_limit": 5,
+          "context_integrity": 0.1,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 20,
+          "deals": 2,
+          "spend": 15980.122,
+          "impressions": 911248,
+          "context_limit": 5,
+          "context_integrity": 0.1,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 21,
+          "deals": 2,
+          "spend": 12410.31525,
+          "impressions": 584799,
+          "context_limit": 5,
+          "context_integrity": 0.1,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 22,
+          "deals": 3,
+          "spend": 12170.2885,
+          "impressions": 607624,
+          "context_limit": 5,
+          "context_integrity": 0.1,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 23,
+          "deals": 4,
+          "spend": 30425.8425,
+          "impressions": 1342484,
+          "context_limit": 5,
+          "context_integrity": 0.1,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 24,
+          "deals": 2,
+          "spend": 13876.532499999998,
+          "impressions": 798257,
+          "context_limit": 5,
+          "context_integrity": 0.1,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 25,
+          "deals": 1,
+          "spend": 11318.0935,
+          "impressions": 461963,
+          "context_limit": 5,
+          "context_integrity": 0.1,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 26,
+          "deals": 4,
+          "spend": 22249.863,
+          "impressions": 1159965,
+          "context_limit": 5,
+          "context_integrity": 0.1,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 27,
+          "deals": 1,
+          "spend": 10760.23425,
+          "impressions": 443721,
+          "context_limit": 5,
+          "context_integrity": 0.1,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 28,
+          "deals": 2,
+          "spend": 7231.899,
+          "impressions": 476330,
+          "context_limit": 5,
+          "context_integrity": 0.1,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 29,
+          "deals": 2,
+          "spend": 19198.725,
+          "impressions": 901872,
+          "context_limit": 5,
+          "context_integrity": 0.1,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        },
+        {
+          "day": 30,
+          "deals": 5,
+          "spend": 22580.19425,
+          "impressions": 1143172,
+          "context_limit": 5,
+          "context_integrity": 0.1,
+          "hallucinations": 0,
+          "hallucination_cost": 0.0,
+          "failed_deals": 0
+        }
+      ],
+      "api_cost_usd": 0.006633,
+      "total_tokens": 23928,
+      "avg_latency_ms": 719.05,
+      "avg_cpm": 18.658771961770807
+    },
+    "C": {
+      "scenario": "C",
+      "name": "Alkimi Ledger-Backed (5% fee)",
+      "fee_pct": 5.0,
+      "deals": 93,
+      "deal_opportunities": 93,
+      "total_spend": 496992.26700000005,
+      "total_fees": 24849.61335,
+      "blockchain_costs": 0.09300000000000005,
+      "total_alkimi_costs": 24849.70635,
+      "total_impressions": 25014604,
+      "context_rot_events": 0,
+      "hallucinations": 0,
+      "hallucination_cost": 0.0,
+      "failed_deals": 0,
+      "daily_results": [
+        {
+          "day": 1,
+          "deals": 5,
+          "spend": 19537.816000000003,
+          "alkimi_fee": 976.8907999999999,
+          "impressions": 889891,
+          "blockchain_cost": 0.005,
+          "hallucinations": 0
+        },
+        {
+          "day": 2,
+          "deals": 6,
+          "spend": 31342.7095,
+          "alkimi_fee": 1567.135475,
+          "impressions": 1646101,
+          "blockchain_cost": 0.006,
+          "hallucinations": 0
+        },
+        {
+          "day": 3,
+          "deals": 1,
+          "spend": 4369.379,
+          "alkimi_fee": 218.46895,
+          "impressions": 189973,
+          "blockchain_cost": 0.001,
+          "hallucinations": 0
+        },
+        {
+          "day": 4,
+          "deals": 5,
+          "spend": 36189.7735,
+          "alkimi_fee": 1809.488675,
+          "impressions": 1882353,
+          "blockchain_cost": 0.005,
+          "hallucinations": 0
+        },
+        {
+          "day": 5,
+          "deals": 3,
+          "spend": 13372.849,
+          "alkimi_fee": 668.64245,
+          "impressions": 786180,
+          "blockchain_cost": 0.003,
+          "hallucinations": 0
+        },
+        {
+          "day": 6,
+          "deals": 3,
+          "spend": 17578.2725,
+          "alkimi_fee": 878.913625,
+          "impressions": 780319,
+          "blockchain_cost": 0.003,
+          "hallucinations": 0
+        },
+        {
+          "day": 7,
+          "deals": 4,
+          "spend": 18132.7545,
+          "alkimi_fee": 906.6377249999999,
+          "impressions": 980382,
+          "blockchain_cost": 0.004,
+          "hallucinations": 0
+        },
+        {
+          "day": 8,
+          "deals": 3,
+          "spend": 17987.2015,
+          "alkimi_fee": 899.360075,
+          "impressions": 1026097,
+          "blockchain_cost": 0.003,
+          "hallucinations": 0
+        },
+        {
+          "day": 9,
+          "deals": 2,
+          "spend": 18639.7325,
+          "alkimi_fee": 931.986625,
+          "impressions": 610101,
+          "blockchain_cost": 0.002,
+          "hallucinations": 0
+        },
+        {
+          "day": 10,
+          "deals": 3,
+          "spend": 9404.994,
+          "alkimi_fee": 470.2497000000001,
+          "impressions": 615623,
+          "blockchain_cost": 0.003,
+          "hallucinations": 0
+        },
+        {
+          "day": 11,
+          "deals": 4,
+          "spend": 15053.4345,
+          "alkimi_fee": 752.6717249999999,
+          "impressions": 642874,
+          "blockchain_cost": 0.004,
+          "hallucinations": 0
+        },
+        {
+          "day": 12,
+          "deals": 4,
+          "spend": 8111.77075,
+          "alkimi_fee": 405.58853750000003,
+          "impressions": 419202,
+          "blockchain_cost": 0.004,
+          "hallucinations": 0
+        },
+        {
+          "day": 13,
+          "deals": 3,
+          "spend": 18270.616,
+          "alkimi_fee": 913.5308,
+          "impressions": 910009,
+          "blockchain_cost": 0.003,
+          "hallucinations": 0
+        },
+        {
+          "day": 14,
+          "deals": 4,
+          "spend": 22117.32275,
+          "alkimi_fee": 1105.8661375000001,
+          "impressions": 898471,
+          "blockchain_cost": 0.004,
+          "hallucinations": 0
+        },
+        {
+          "day": 15,
+          "deals": 3,
+          "spend": 11217.454,
+          "alkimi_fee": 560.8727,
+          "impressions": 738436,
+          "blockchain_cost": 0.003,
+          "hallucinations": 0
+        },
+        {
+          "day": 16,
+          "deals": 3,
+          "spend": 13374.64825,
+          "alkimi_fee": 668.7324125,
+          "impressions": 592558,
+          "blockchain_cost": 0.003,
+          "hallucinations": 0
+        },
+        {
+          "day": 17,
+          "deals": 2,
+          "spend": 9771.133000000002,
+          "alkimi_fee": 488.55665000000005,
+          "impressions": 532352,
+          "blockchain_cost": 0.002,
+          "hallucinations": 0
+        },
+        {
+          "day": 18,
+          "deals": 3,
+          "spend": 17868.482249999997,
+          "alkimi_fee": 893.4241125,
+          "impressions": 930336,
+          "blockchain_cost": 0.003,
+          "hallucinations": 0
+        },
+        {
+          "day": 19,
+          "deals": 4,
+          "spend": 25534.27575,
+          "alkimi_fee": 1276.7137875,
+          "impressions": 1111911,
+          "blockchain_cost": 0.004,
+          "hallucinations": 0
+        },
+        {
+          "day": 20,
+          "deals": 2,
+          "spend": 15900.25875,
+          "alkimi_fee": 795.0129375000001,
+          "impressions": 911248,
+          "blockchain_cost": 0.002,
+          "hallucinations": 0
+        },
+        {
+          "day": 21,
+          "deals": 2,
+          "spend": 11147.854,
+          "alkimi_fee": 557.3927,
+          "impressions": 584799,
+          "blockchain_cost": 0.002,
+          "hallucinations": 0
+        },
+        {
+          "day": 22,
+          "deals": 3,
+          "spend": 12956.179000000002,
+          "alkimi_fee": 647.8089500000001,
+          "impressions": 607624,
+          "blockchain_cost": 0.003,
+          "hallucinations": 0
+        },
+        {
+          "day": 23,
+          "deals": 4,
+          "spend": 33036.53475,
+          "alkimi_fee": 1651.8267375,
+          "impressions": 1342484,
+          "blockchain_cost": 0.004,
+          "hallucinations": 0
+        },
+        {
+          "day": 24,
+          "deals": 2,
+          "spend": 9982.585749999998,
+          "alkimi_fee": 499.1292875,
+          "impressions": 798257,
+          "blockchain_cost": 0.002,
+          "hallucinations": 0
+        },
+        {
+          "day": 25,
+          "deals": 1,
+          "spend": 8546.3155,
+          "alkimi_fee": 427.31577500000003,
+          "impressions": 461963,
+          "blockchain_cost": 0.001,
+          "hallucinations": 0
+        },
+        {
+          "day": 26,
+          "deals": 4,
+          "spend": 20274.077,
+          "alkimi_fee": 1013.7038500000001,
+          "impressions": 1159965,
+          "blockchain_cost": 0.004,
+          "hallucinations": 0
+        },
+        {
+          "day": 27,
+          "deals": 1,
+          "spend": 11425.81575,
+          "alkimi_fee": 571.2907875,
+          "impressions": 443721,
+          "blockchain_cost": 0.001,
+          "hallucinations": 0
+        },
+        {
+          "day": 28,
+          "deals": 2,
+          "spend": 5617.3994999999995,
+          "alkimi_fee": 280.869975,
+          "impressions": 476330,
+          "blockchain_cost": 0.002,
+          "hallucinations": 0
+        },
+        {
+          "day": 29,
+          "deals": 2,
+          "spend": 20810.946,
+          "alkimi_fee": 1040.5473000000002,
+          "impressions": 901872,
+          "blockchain_cost": 0.002,
+          "hallucinations": 0
+        },
+        {
+          "day": 30,
+          "deals": 5,
+          "spend": 19419.68175,
+          "alkimi_fee": 970.9840875,
+          "impressions": 1143172,
+          "blockchain_cost": 0.005,
+          "hallucinations": 0
+        }
+      ],
+      "api_cost_usd": 0.007779,
+      "total_tokens": 28511,
+      "avg_latency_ms": 772.87,
+      "avg_cpm": 19.86808453973527
+    }
+  },
+  "end_time": "2026-01-30T13:37:28.229804",
+  "total_api_cost_usd": 0.014412000000000001
+}

@@ -17,18 +17,18 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Optional
 
-from ..agents.seller.l1_inventory_manager import InventoryManager
-from ..agents.seller.l2_display import DisplayInventoryAgent
-from ..agents.seller.l2_video import VideoInventoryAgent
-from ..agents.seller.l2_ctv import CTVInventoryAgent
-from ..agents.seller.l2_mobile import MobileAppInventoryAgent
-from ..agents.seller.l2_native import NativeInventoryAgent
-from ..agents.seller.l3_pricing import PricingAgent
-from ..agents.seller.l3_avails import AvailsAgent
-from ..agents.seller.l3_audience_validator import AudienceValidatorAgent
-from ..agents.seller.l3_upsell import UpsellAgent
-from ..agents.seller.l3_proposal_review import ProposalReviewAgent
-from ..agents.seller.models import (
+from agents.seller.l1_inventory_manager import InventoryManager
+from agents.seller.l2_display import DisplayInventoryAgent
+from agents.seller.l2_video import VideoInventoryAgent
+from agents.seller.l2_ctv import CTVInventoryAgent
+from agents.seller.l2_mobile import MobileAppInventoryAgent
+from agents.seller.l2_native import NativeInventoryAgent
+from agents.seller.l3_pricing import PricingAgent
+from agents.seller.l3_avails import AvailsAgent
+from agents.seller.l3_audience_validator import AudienceValidatorAgent
+from agents.seller.l3_upsell import UpsellAgent
+from agents.seller.l3_proposal_review import ProposalReviewAgent
+from agents.seller.models import (
     DealRequest,
     DealDecision,
     DealAction,
@@ -41,7 +41,7 @@ from ..agents.seller.models import (
     TaskResult,
     YieldStrategy,
 )
-from ..protocols.inter_level import (
+from protocols.inter_level import (
     InterLevelProtocol,
     AgentContext,
     Task as ProtocolTask,
@@ -388,7 +388,7 @@ class SellerAgentSystem:
             ChannelType.CTV.value: CTVInventoryAgent(
                 agent_id=f"{self.seller_id}-l2-ctv",
             ),
-            ChannelType.MOBILE.value: MobileAppInventoryAgent(
+            ChannelType.MOBILE_APP.value: MobileAppInventoryAgent(
                 agent_id=f"{self.seller_id}-l2-mobile",
             ),
             ChannelType.NATIVE.value: NativeInventoryAgent(
@@ -536,7 +536,7 @@ class SellerAgentSystem:
         Returns:
             DealDecision
         """
-        from ..agents.seller.models import AudienceSpec as SellerAudienceSpec
+        from agents.seller.models import AudienceSpec as SellerAudienceSpec
         
         # Create deal request
         request = DealRequest(

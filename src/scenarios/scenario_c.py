@@ -46,16 +46,16 @@ from typing import Any, Optional
 import structlog
 
 from .base import BaseScenario, ScenarioConfig, ScenarioMetrics
-from ..infrastructure.redis_bus import RedisBus
-from ..infrastructure.message_schemas import (
+from infrastructure.redis_bus import RedisBus
+from infrastructure.message_schemas import (
     BidRequest,
     BidResponse,
     DealConfirmation,
     DealType,
     CONSUMER_GROUPS,
 )
-from ..infrastructure.ledger import LedgerClient, create_ledger_client
-from ..metrics.collector import MetricCollector
+from infrastructure.ledger import LedgerClient, create_ledger_client
+from metrics.collector import MetricCollector
 
 logger = structlog.get_logger()
 

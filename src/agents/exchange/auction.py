@@ -14,14 +14,14 @@ from typing import Optional
 from collections import defaultdict
 import structlog
 
-from ...infrastructure.message_schemas import (
+from infrastructure.message_schemas import (
     BidRequest,
     BidResponse,
     DealConfirmation,
     DealType,
     CONSUMER_GROUPS,
 )
-from ...infrastructure.redis_bus import RedisBus
+from infrastructure.redis_bus import RedisBus
 from .fees import FeeConfig, calculate_markup_cpm
 
 logger = structlog.get_logger()
@@ -148,7 +148,7 @@ class RentSeekingExchange:
 
     def __init__(
         self,
-        bus: RedisBus,
+        bus: Optional[RedisBus] = None,
         fee_config: Optional[FeeConfig] = None,
         exchange_id: str = "exchange-001",
     ):
@@ -156,11 +156,11 @@ class RentSeekingExchange:
         Initialize exchange agent.
 
         Args:
-            bus: Redis bus for message routing
+            bus: Redis bus for message routing (optional for mock mode)
             fee_config: Fee extraction configuration (default: 15%)
             exchange_id: Unique identifier for this exchange
         """
-        self.bus = bus
+        self.bus = bus  # Can be None for direct method calls
         self.fee_config = fee_config or FeeConfig()
         self.exchange_id = exchange_id
 

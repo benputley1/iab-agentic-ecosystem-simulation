@@ -10,8 +10,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
 
-from ....infrastructure.redis_bus import RedisBus
-from ....infrastructure.message_schemas import (
+from infrastructure.redis_bus import RedisBus
+from infrastructure.message_schemas import (
     BidRequest,
     BidResponse,
     DealConfirmation,
@@ -78,7 +78,7 @@ class SimulationClient:
             Self for context manager chaining
         """
         if self._bus is None:
-            from ....infrastructure.redis_bus import create_redis_bus
+            from infrastructure.redis_bus import create_redis_bus
 
             self._bus = await create_redis_bus(
                 consumer_id=f"buyer-{self.buyer_id}"

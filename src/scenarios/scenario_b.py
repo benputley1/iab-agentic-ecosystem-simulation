@@ -45,19 +45,19 @@ from .context_rot import (
     RecoverySource,
     SCENARIO_B_ROT_CONFIG,
 )
-from ..infrastructure.redis_bus import RedisBus
-from ..infrastructure.message_schemas import (
+from infrastructure.redis_bus import RedisBus
+from infrastructure.message_schemas import (
     BidRequest,
     BidResponse,
     DealConfirmation,
     DealType,
     CONSUMER_GROUPS,
 )
-from ..agents.ucp.hallucination import (
+from agents.ucp.hallucination import (
     HallucinationManager,
     HallucinationInjector,
 )
-from ..metrics.collector import MetricCollector
+from metrics.collector import MetricCollector
 
 logger = structlog.get_logger()
 

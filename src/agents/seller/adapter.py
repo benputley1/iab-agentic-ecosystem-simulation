@@ -28,8 +28,8 @@ VENDOR_PATH = os.path.join(
 if VENDOR_PATH not in sys.path:
     sys.path.insert(0, VENDOR_PATH)
 
-from ...infrastructure.redis_bus import RedisBus
-from ...infrastructure.message_schemas import (
+from infrastructure.redis_bus import RedisBus
+from infrastructure.message_schemas import (
     BidRequest,
     BidResponse,
     DealConfirmation,

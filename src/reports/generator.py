@@ -12,7 +12,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional, Any
 
-from ..metrics.kpis import (
+from metrics.kpis import (
     KPICalculator,
     FeeExtractionMetrics,
     GoalAchievementMetrics,
@@ -20,9 +20,9 @@ from ..metrics.kpis import (
     HallucinationMetrics,
     BlockchainCostMetrics,
 )
-from ..metrics.collector import InfluxConfig
-from ..sim_logging.events import EventIndex, Scenario
-from ..sim_logging.comparison import ComparisonAnalyzer, ComparisonReport
+from metrics.collector import InfluxConfig
+from sim_logging.events import EventIndex, Scenario
+from sim_logging.comparison import ComparisonAnalyzer, ComparisonReport
 
 
 class ReportFormat(str, Enum):

@@ -18,12 +18,12 @@ import asyncio
 import structlog
 import uuid
 
-from ..infrastructure.message_schemas import DealConfirmation
+from infrastructure.message_schemas import DealConfirmation
 
 # Type checking imports - these won't be loaded at runtime
 if TYPE_CHECKING:
-    from ..agents.buyer.wrapper import Campaign, BuyerAgentWrapper
-    from ..agents.seller.adapter import SellerAgentAdapter
+    from agents.buyer.wrapper import Campaign, BuyerAgentWrapper
+    from agents.seller.adapter import SellerAgentAdapter
 
 
 class CampaignProtocol(Protocol):
