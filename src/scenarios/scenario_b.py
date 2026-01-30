@@ -100,6 +100,10 @@ class ScenarioB(BaseScenario):
         metric_collector: Optional[MetricCollector] = None,
         context_rot_config: Optional[ContextRotConfig] = None,
         seed: Optional[int] = None,
+        # A2A HTTP Mode (IAB agentic-direct compliance)
+        a2a_http_mode: bool = False,
+        a2a_base_port: int = 8100,
+        seller_adapters: Optional[dict] = None,
     ):
         config = config or self._default_config()
         super().__init__(
@@ -135,6 +139,19 @@ class ScenarioB(BaseScenario):
 
         # Random for simulation decisions
         self._random = random.Random(seed)
+        
+        # A2A HTTP Mode (IAB agentic-direct compliance)
+        # When enabled, uses HTTP JSON-RPC 2.0 instead of Redis pub/sub
+        self._a2a_http_mode = a2a_http_mode
+        self._a2a_base_port = a2a_base_port
+        self._a2a_manager = None
+        self._seller_adapters = seller_adapters or {}
+        
+        if a2a_http_mode:
+            logger.info(
+                "scenario_b.a2a_http_mode_enabled",
+                base_port=a2a_base_port,
+            )
 
     @classmethod
     def _default_config(cls) -> ScenarioConfig:
@@ -158,9 +175,34 @@ class ScenarioB(BaseScenario):
     async def setup(self) -> None:
         """Set up scenario resources."""
         await self.connect()
+        
+        # Initialize A2A HTTP mode if enabled
+        if self._a2a_http_mode and self._seller_adapters:
+            from .a2a_http_mode import A2AHTTPManager
+            
+            self._a2a_manager = A2AHTTPManager(
+                base_port=self._a2a_base_port,
+            )
+            
+            # Start seller A2A servers
+            await self._a2a_manager.start_seller_servers(self._seller_adapters)
+            
+            # Create buyer clients for all known buyers
+            buyer_ids = list(self._buyer_memories.keys()) or ["default-buyer"]
+            await self._a2a_manager.create_buyer_clients(buyer_ids)
+            
+            logger.info(
+                "scenario_b.a2a_setup_complete",
+                sellers=len(self._seller_adapters),
+            )
 
     async def teardown(self) -> None:
         """Clean up scenario resources."""
+        # Shutdown A2A HTTP mode
+        if self._a2a_manager:
+            await self._a2a_manager.shutdown()
+            self._a2a_manager = None
+        
         # Clear volatile memories
         self._buyer_memories.clear()
         self._seller_memories.clear()
@@ -295,6 +337,125 @@ class ScenarioB(BaseScenario):
 
         # Note: Responses will be collected asynchronously
         return []
+
+    async def process_bid_request_a2a_http(
+        self,
+        request: BidRequest,
+        seller_ids: Optional[list[str]] = None,
+    ) -> Optional[DealConfirmation]:
+        """
+        Process bid request via A2A HTTP protocol (IAB agentic-direct).
+        
+        This method uses HTTP JSON-RPC 2.0 instead of Redis pub/sub,
+        following the IAB agentic-direct specification.
+        
+        Args:
+            request: Buyer's bid request
+            seller_ids: Optional list of sellers to contact (defaults to all)
+            
+        Returns:
+            DealConfirmation if successful, None otherwise
+        """
+        if not self._a2a_manager:
+            logger.error("scenario_b.a2a_http_not_initialized")
+            return None
+        
+        buyer_memory = self.get_or_create_buyer_memory(request.buyer_id)
+        buyer_memory.pending_requests[request.request_id] = request
+        
+        # Determine which sellers to contact
+        target_sellers = seller_ids or list(self._seller_adapters.keys())
+        
+        logger.info(
+            "scenario_b.a2a_http_request",
+            request_id=request.request_id,
+            buyer_id=request.buyer_id,
+            channel=request.channel,
+            max_cpm=request.max_cpm,
+            sellers=len(target_sellers),
+        )
+        
+        # Try each seller until we get a deal
+        for seller_id in target_sellers:
+            result = await self._a2a_manager.negotiate_deal(
+                buyer_id=request.buyer_id,
+                seller_id=seller_id,
+                request=request,
+            )
+            
+            if result.success:
+                # Apply hallucination to price (context rot simulation)
+                final_cpm = self._hallucination_mgr.process_price_data(
+                    real_price=result.cpm,
+                    agent_id=request.buyer_id,
+                    agent_type="buyer",
+                    publisher_id=seller_id,
+                    simulation_day=self.current_day,
+                )
+                
+                # Create deal confirmation
+                deal = DealConfirmation(
+                    deal_id=result.deal_id,
+                    request_id=request.request_id,
+                    buyer_id=request.buyer_id,
+                    seller_id=seller_id,
+                    campaign_id=request.campaign_id,
+                    channel=request.channel,
+                    cpm=final_cpm,
+                    impressions=result.impressions,
+                    total_cost=(result.impressions / 1000) * final_cpm,
+                    seller_revenue=(result.impressions / 1000) * final_cpm,  # No fees
+                    exchange_fee=0.0,  # Scenario B: no exchange
+                    scenario="B",
+                    deal_type=DealType.PREFERRED_DEAL,
+                )
+                
+                # Update memories
+                seller_memory = self.get_or_create_seller_memory(seller_id)
+                buyer_memory.deal_history[deal.deal_id] = deal
+                seller_memory.deal_history[deal.deal_id] = deal
+                
+                # Record metrics
+                self.record_deal(deal)
+                
+                # Record decision
+                await self.record_decision(
+                    verified=False,  # No ground truth in Scenario B
+                    agent_id=request.buyer_id,
+                    agent_type="buyer",
+                    decision_type="deal_accepted_a2a_http",
+                    decision_input={
+                        "request_id": request.request_id,
+                        "seller_id": seller_id,
+                        "offered_cpm": result.cpm,
+                        "negotiation_steps": result.steps,
+                    },
+                    decision_output={
+                        "deal_id": result.deal_id,
+                        "final_cpm": final_cpm,
+                    },
+                )
+                
+                logger.info(
+                    "scenario_b.a2a_http_deal_created",
+                    deal_id=deal.deal_id,
+                    buyer_id=deal.buyer_id,
+                    seller_id=deal.seller_id,
+                    cpm=deal.cpm,
+                    impressions=deal.impressions,
+                    steps=result.steps,
+                )
+                
+                return deal
+        
+        # No deal found
+        logger.info(
+            "scenario_b.a2a_http_no_deal",
+            request_id=request.request_id,
+            buyer_id=request.buyer_id,
+            sellers_tried=len(target_sellers),
+        )
+        return None
 
     async def process_bid_response(
         self,

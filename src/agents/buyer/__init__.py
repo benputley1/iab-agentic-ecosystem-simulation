@@ -103,6 +103,8 @@ from .l3_research import ResearchAgent
 from .l3_execution import ExecutionAgent
 from .l3_reporting import ReportingAgent
 from .l3_audience_planner import AudiencePlannerAgent
+# A2A Client
+from .a2a_client import A2AClient, A2AResponse
 
 __all__ = [
     # Configuration
@@ -173,4 +175,7 @@ __all__ = [
     "ExecutionAgent",
     "ReportingAgent",
     "AudiencePlannerAgent",
+    # A2A Client
+    "A2AClient",
+    "A2AResponse",
 ]
