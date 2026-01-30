@@ -64,7 +64,36 @@ python scripts/run_real_context_simulation.py --days 30 --deals-per-day 100
 
 **Expected cost:** $90-150 for 30-day simulation (Sonnet pricing)
 
-### Option 2: Quick Test (No Infrastructure Required)
+### Option 2: Context Pressure Simulation (NEW)
+
+This mode demonstrates the **Two-Level Context Pressure Model** — what happens when campaigns generate more data than agents can remember.
+
+```bash
+# Run pressure simulation (3 buyers × 3 campaigns × 1M impressions each)
+python scripts/run_pressure_simulation.py --buyers 3 --campaigns 3 --impressions 1000000
+
+# Monitor results
+python scripts/monitor_pressure.py
+
+# Full scale test (10 buyers × 10 campaigns = 100 campaigns, 100M total impressions)
+python scripts/run_pressure_simulation.py --buyers 10 --campaigns 10
+```
+
+**Key insight:** At 1M impressions × 50 tokens each = 50M theoretical tokens, but context limit is ~200K. Pressure ratio = 250x. This causes:
+- Memory overflow events (agent forgets deal terms)
+- Price drift (recalled CPM ≠ agreed CPM)  
+- Reconciliation failures (buyer/seller records diverge)
+
+**Pressure Thresholds:**
+| Pressure | Expected Behavior |
+|----------|-------------------|
+| 0-25% | Clean recall |
+| 25-50% | Minor drift (±2%) |
+| 50-75% | Moderate drift (±5-10%) |
+| 75-100% | Hallucinations expected |
+| >100% | Breakdown |
+
+### Option 3: Quick Test (No Infrastructure Required)
 
 ```bash
 # Run quick test with mock mode (no APIs, no databases)
@@ -291,6 +320,11 @@ With $150B global programmatic spend:
 ```
 ├── src/
 │   ├── cli/                  # CLI entry point (rtb-sim command)
+│   ├── models/
+│   │   ├── agent_state.py    # Agent state tracking and reconciliation
+│   │   └── campaign_execution.py  # Context pressure models (NEW)
+│   ├── llm/
+│   │   └── pricing_agent.py  # Real LLM pricing decisions
 │   ├── scenarios/
 │   │   ├── scenario_a.py     # Current state (exchange)
 │   │   ├── scenario_b.py     # IAB Pure A2A (context rot)
@@ -306,6 +340,10 @@ With $150B global programmatic spend:
 │   │   └── ground_truth.py   # Reality verification
 │   └── orchestration/
 │       └── run_simulation.py # Main simulation runner
+├── scripts/
+│   ├── run_pressure_simulation.py  # Two-level context pressure (NEW)
+│   ├── monitor_pressure.py         # Pressure analysis dashboard (NEW)
+│   └── run_multi_agent_isolated.py # Multi-agent simulation
 ├── docker/
 │   ├── docker-compose.yml    # PostgreSQL, Redis, InfluxDB
 │   └── grafana/dashboards/   # Visualization dashboards
