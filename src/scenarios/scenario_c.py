@@ -186,10 +186,13 @@ class ScenarioC(BaseScenario):
             scenario_code="C",
             name="Alkimi Ledger-Backed",
             description="Direct buyer↔seller with immutable blockchain persistence",
-            exchange_fee_pct=0.0,  # No exchange fees in Scenario C
+            exchange_fee_pct=0.05,  # Alkimi platform fee: 5% (3-8% range typical)
             context_decay_rate=0.0,  # No context rot with ledger
             hallucination_rate=0.0,  # Ground truth from ledger prevents hallucinations
         )
+    
+    # Alkimi platform fee configuration (separate from blockchain costs)
+    ALKIMI_FEE_PCT = 0.05  # 5% platform fee (configurable 3-8%)
 
     @property
     def scenario_code(self) -> str:
@@ -616,21 +619,25 @@ class ScenarioC(BaseScenario):
         """
         Create deal with ledger recording.
 
-        No exchange fee - only minimal blockchain costs.
+        Alkimi charges a low platform fee (3-8%, default 5%) instead of
+        traditional exchange fees (15-20%). Plus minimal blockchain costs.
 
         Args:
             request: Buyer's request
             response: Seller's accepted response
 
         Returns:
-            DealConfirmation with zero exchange fees
+            DealConfirmation with Alkimi platform fee
         """
-        # Create deal with NO exchange fee
+        # Get Alkimi fee from config or use default
+        alkimi_fee_pct = getattr(self.config, 'exchange_fee_pct', self.ALKIMI_FEE_PCT)
+        
+        # Create deal with Alkimi platform fee (much lower than traditional 15%)
         deal = DealConfirmation.from_deal(
             request=request,
             response=response,
             scenario="C",
-            exchange_fee_pct=0.0,  # No intermediary fees
+            exchange_fee_pct=alkimi_fee_pct,  # Alkimi platform fee: 5% (vs 15% traditional)
         )
 
         # Record deal to ledger
@@ -644,7 +651,8 @@ class ScenarioC(BaseScenario):
                 "impressions": deal.impressions,
                 "cpm": deal.cpm,
                 "total_cost": deal.total_cost,
-                "exchange_fee": 0.0,
+                "exchange_fee": deal.exchange_fee,  # Alkimi platform fee
+                "alkimi_fee_pct": alkimi_fee_pct,
                 "scenario": "C",
             },
             created_by="system",
@@ -679,7 +687,8 @@ class ScenarioC(BaseScenario):
             deal_id=deal.deal_id,
             buyer_spend=deal.total_cost,
             seller_revenue=deal.seller_revenue,
-            exchange_fee=0.0,
+            alkimi_fee=deal.exchange_fee,  # Alkimi platform fee (5%)
+            alkimi_fee_pct=f"{alkimi_fee_pct*100:.1f}%",
             blockchain_cost_usd=float(blockchain_costs.total_cost_usd) if blockchain_costs else 0,
             ledger_entry_id=entry_id,
         )
