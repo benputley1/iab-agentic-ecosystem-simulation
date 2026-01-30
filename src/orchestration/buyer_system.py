@@ -460,6 +460,7 @@ class BuyerAgentSystem:
         self._l1_portfolio_manager = create_portfolio_manager(
             agent_id=f"{self.buyer_id}-l1-pm",
             scenario=self.scenario,
+            mock_llm=self.mock_llm,
         )
         await self._l1_portfolio_manager.initialize()
         

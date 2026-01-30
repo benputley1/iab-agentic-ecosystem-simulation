@@ -19,7 +19,7 @@ import asyncio
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from typing import Optional
 
 from .base import BaseScenario, ScenarioConfig, ScenarioMetrics
@@ -45,7 +45,7 @@ from agents.buyer.models import (
     AudienceSpec,
     Channel,
 )
-from agents.seller.models import DealRequest, DealDecision, DealAction, BuyerTier
+from agents.seller.models import DealRequest, DealDecision, DealAction, BuyerTier, DealTypeEnum, AudienceSpec
 from agents.exchange.auction import RentSeekingExchange
 from agents.exchange.fees import FeeConfig
 from infrastructure.message_schemas import DealConfirmation
@@ -258,8 +258,20 @@ class MultiAgentScenarioA(BaseScenario):
             self._seller_systems[seller_id] = system
             logger.info(f"Seller system {seller_id} initialized")
         
-        # Create exchange
+        # Connect to Redis bus
+        bus = await self.connect_bus()
+        
+        # Ensure consumer groups exist
+        await bus.ensure_consumer_group("rtb:requests", "sellers-group")
+        await bus.ensure_consumer_group("rtb:requests", "exchange-group")
+        await bus.ensure_consumer_group("rtb:responses", "exchange-group")
+        await bus.ensure_consumer_group("rtb:deals", "buyers-group")
+        await bus.ensure_consumer_group("rtb:deals", "sellers-group")
+        logger.info("Redis bus connected with consumer groups")
+        
+        # Create exchange with bus
         self._exchange = RentSeekingExchange(
+            bus=bus,
             fee_config=FeeConfig(base_fee_pct=self.config.exchange_fee_pct),
         )
         
@@ -438,12 +450,15 @@ class MultiAgentScenarioA(BaseScenario):
             
             # Create deal request
             deal_request = DealRequest(
-                deal_id=deal_id,
+                request_id=deal_id,
                 buyer_id=buyer_system.buyer_id,
                 buyer_tier=BuyerTier.AGENCY,  # Default tier
+                product_id="default-product",
                 impressions=target_impressions,
-                offered_cpm=target_cpm,
-                products=[],
+                max_cpm=target_cpm,
+                deal_type=DealTypeEnum.PREFERRED_DEAL,
+                flight_dates=(date.today(), date.today() + timedelta(days=30)),
+                audience_spec=AudienceSpec(),
             )
             
             # === SELLER SIDE ===
@@ -598,6 +613,9 @@ class MultiAgentScenarioA(BaseScenario):
         
         # Disconnect ground truth
         await self.disconnect_ground_truth()
+        
+        # Disconnect Redis bus
+        await self.disconnect_bus()
         
         logger.info("MultiAgentScenarioA teardown complete")
     

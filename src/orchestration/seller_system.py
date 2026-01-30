@@ -14,16 +14,17 @@ import asyncio
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Optional
 
 from agents.seller.l1_inventory_manager import InventoryManager
+from agents.base.specialist import AvailsRequest
 from agents.seller.l2_display import DisplayInventoryAgent
 from agents.seller.l2_video import VideoInventoryAgent
 from agents.seller.l2_ctv import CTVInventoryAgent
 from agents.seller.l2_mobile import MobileAppInventoryAgent
 from agents.seller.l2_native import NativeInventoryAgent
-from agents.seller.l3_pricing import PricingAgent
+from agents.seller.l3_pricing import PricingAgent, BuyerContext
 from agents.seller.l3_avails import AvailsAgent
 from agents.seller.l3_audience_validator import AudienceValidatorAgent
 from agents.seller.l3_upsell import UpsellAgent
@@ -32,6 +33,7 @@ from agents.seller.models import (
     DealRequest,
     DealDecision,
     DealAction,
+    DealTypeEnum,
     InventoryPortfolio,
     Product,
     ChannelType,
@@ -40,6 +42,7 @@ from agents.seller.models import (
     Task,
     TaskResult,
     YieldStrategy,
+    AudienceSpec,
 )
 from protocols.inter_level import (
     InterLevelProtocol,
@@ -171,13 +174,13 @@ class SellerContextFlowManager:
             agent_id=agent_id,
             level=1,
             working_memory={
-                "deal_id": deal_request.deal_id,
+                "deal_id": deal_request.request_id,
                 "buyer_id": deal_request.buyer_id,
                 "buyer_tier": deal_request.buyer_tier.value if deal_request.buyer_tier else "public",
-                "requested_products": [p.product_id for p in deal_request.products] if deal_request.products else [],
+                "requested_product": deal_request.product_id,
                 "requested_impressions": deal_request.impressions,
-                "offered_cpm": deal_request.offered_cpm,
-                "audience_spec": deal_request.audience.to_dict() if deal_request.audience else {},
+                "max_cpm": deal_request.max_cpm,
+                "audience_spec": deal_request.audience_spec.to_dict() if deal_request.audience_spec else {},
             },
             constraints={
                 "min_cpm_threshold": 5.0,  # Minimum acceptable CPM
@@ -374,6 +377,7 @@ class SellerAgentSystem:
         self._l1_inventory_manager = InventoryManager(
             seller_id=self.seller_id,
             portfolio=self._portfolio,
+            mock_llm=self.mock_llm,
         )
         await self._l1_inventory_manager.initialize()
         
@@ -455,14 +459,14 @@ class SellerAgentSystem:
             )
             
             # L1: Strategic evaluation
-            logger.info(f"L1 evaluating deal {request.deal_id}")
+            logger.info(f"L1 evaluating deal {request.request_id}")
             self.metrics.total_l1_decisions += 1
             
-            decision = await self._l1_inventory_manager.evaluate_deal(request)
+            decision = await self._l1_inventory_manager.evaluate_deal_request(request)
             
-            # L2: Channel-specific checks
-            channel = request.products[0].channel if request.products else ChannelType.DISPLAY
-            specialist = self._l2_inventory.get(channel.value if hasattr(channel, 'value') else str(channel))
+            # L2: Channel-specific checks (derive channel from product_id or default to display)
+            channel = ChannelType.DISPLAY  # Default channel
+            specialist = self._l2_inventory.get(channel.value)
             
             if specialist:
                 l2_context = self.context_manager.pass_down(context, 1, 2)
@@ -471,10 +475,13 @@ class SellerAgentSystem:
                 
                 # L2 checks availability
                 logger.info(f"L2 checking {channel} availability")
-                availability = await specialist.check_availability(
-                    impressions=request.impressions,
-                    date_range=(request.start_date, request.end_date) if hasattr(request, 'start_date') else None,
+                avails_request = AvailsRequest(
+                    channel=channel.value,
+                    impressions_needed=request.impressions,
+                    start_date=request.flight_dates[0].isoformat() if request.flight_dates else None,
+                    end_date=request.flight_dates[1].isoformat() if request.flight_dates else None,
                 )
+                availability = await specialist.check_availability(avails_request)
                 
                 # L3: Pricing calculation
                 pricing_agent = self._l3_functional.get("pricing")
@@ -483,21 +490,25 @@ class SellerAgentSystem:
                     self.metrics.context_handoffs += 1
                     self.metrics.total_l3_operations += 1
                     
-                    logger.info(f"L3 calculating price for deal {request.deal_id}")
+                    logger.info(f"L3 calculating price for deal {request.request_id}")
+                    buyer_context = BuyerContext(
+                        buyer_id=request.buyer_id,
+                        tier=request.buyer_tier.value if request.buyer_tier else "standard",
+                    )
                     pricing_result = await pricing_agent.calculate_price(
-                        impressions=request.impressions,
-                        buyer_tier=request.buyer_tier,
-                        floor_cpm=decision.counter_cpm if decision.counter_cpm else 10.0,
+                        product_id=request.product_id,
+                        buyer_context=buyer_context,
+                        requested_impressions=request.impressions,
                     )
                     
                     # Update decision with L3 pricing
-                    if pricing_result.get("recommended_cpm"):
-                        decision.counter_cpm = pricing_result["recommended_cpm"]
+                    if hasattr(pricing_result, 'final_cpm') and decision.counter_offer:
+                        decision.counter_offer.suggested_cpm = pricing_result.final_cpm
             
             # Track decision
             if decision.action == DealAction.ACCEPT:
                 self.metrics.deals_accepted += 1
-                self.metrics.total_revenue += request.offered_cpm * request.impressions / 1000
+                self.metrics.total_revenue += request.max_cpm * request.impressions / 1000
                 self.metrics.total_impressions_sold += request.impressions
             elif decision.action == DealAction.REJECT:
                 self.metrics.deals_rejected += 1
@@ -509,8 +520,10 @@ class SellerAgentSystem:
         except Exception as e:
             logger.error(f"Deal evaluation failed: {e}", exc_info=True)
             return DealDecision(
-                deal_id=request.deal_id,
+                request_id=request.request_id,
                 action=DealAction.REJECT,
+                price=0.0,
+                impressions=0,
                 reasoning=f"Evaluation error: {str(e)}",
             )
     
@@ -536,17 +549,17 @@ class SellerAgentSystem:
         Returns:
             DealDecision
         """
-        from agents.seller.models import AudienceSpec as SellerAudienceSpec
-        
         # Create deal request
         request = DealRequest(
-            deal_id=f"deal-{uuid.uuid4().hex[:8]}",
+            request_id=f"deal-{uuid.uuid4().hex[:8]}",
             buyer_id=buyer_id,
             buyer_tier=BuyerTier.PUBLIC,
+            product_id="default-product",
             impressions=impressions,
-            offered_cpm=offered_cpm,
-            products=[],  # Will be determined by L2
-            audience=SellerAudienceSpec(**audience_spec) if audience_spec else None,
+            max_cpm=offered_cpm,
+            deal_type=DealTypeEnum.PREFERRED_DEAL,
+            flight_dates=(date.today(), date.today() + timedelta(days=30)),
+            audience_spec=AudienceSpec(**audience_spec) if audience_spec else AudienceSpec(),
         )
         
         return await self.evaluate_deal(request)

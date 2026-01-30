@@ -81,6 +81,7 @@ class PortfolioManager(OrchestratorAgent):
         self,
         agent_id: Optional[str] = None,
         name: str = "PortfolioManager",
+        mock_llm: bool = False,
         **kwargs
     ):
         """Initialize the Portfolio Manager.
@@ -88,6 +89,7 @@ class PortfolioManager(OrchestratorAgent):
         Args:
             agent_id: Unique identifier for this manager
             name: Display name for the manager
+            mock_llm: Use mock LLM (skip actual API calls)
             **kwargs: Additional args passed to OrchestratorAgent
         """
         super().__init__(
@@ -95,6 +97,7 @@ class PortfolioManager(OrchestratorAgent):
             name=name,
             **kwargs
         )
+        self.mock_llm = mock_llm
         self._portfolio = PortfolioState(portfolio_id=f"portfolio-{self.agent_id}")
     
     def get_system_prompt(self) -> str:
@@ -279,6 +282,11 @@ Respond in JSON format with keys: decision_type, description, rationale, impact 
         if not campaigns:
             return BudgetAllocation(reasoning="No campaigns to allocate")
         
+        # Use default allocation in mock mode (skip LLM call)
+        if self.mock_llm:
+            logger.debug("Mock LLM mode: using default budget allocation")
+            return self._default_allocation(campaigns)
+        
         # Prepare portfolio summary
         total_budget = sum(c.remaining_budget for c in campaigns)
         portfolio_summary = f"Total campaigns: {len(campaigns)}, Total budget: ${total_budget:,.2f}"
@@ -366,6 +374,11 @@ Respond in JSON format with keys: decision_type, description, rationale, impact 
         Returns:
             List of channel selections with rationale
         """
+        # Use default channel selection in mock mode (skip LLM call)
+        if self.mock_llm:
+            logger.debug("Mock LLM mode: using default channel selection")
+            return self._default_channel_selection(campaign)
+        
         campaign_json = json.dumps(campaign.to_dict(), indent=2)
         audience_json = json.dumps(campaign.audience.to_dict(), indent=2)
         
@@ -425,21 +438,48 @@ Available Channels:
             except json.JSONDecodeError:
                 pass
             
-            return [ChannelSelection(
-                channel=Channel.DISPLAY.value,
-                selected=True,
-                allocation_pct=1.0,
-                rationale="Default fallback to display",
-            )]
+            return self._default_channel_selection(campaign)
             
         except Exception as e:
             logger.error(f"Channel selection failed: {e}")
+            # On error, fall back to simple display-only selection
             return [ChannelSelection(
                 channel=Channel.DISPLAY.value,
                 selected=True,
                 allocation_pct=1.0,
                 rationale="Default fallback to display",
             )]
+    
+    def _default_channel_selection(self, campaign: Campaign) -> List[ChannelSelection]:
+        """Create default channel selection based on campaign's channel_mix.
+        
+        Args:
+            campaign: Campaign to select channels for
+            
+        Returns:
+            List of channel selections
+        """
+        channel_mix = campaign.objectives.channel_mix
+        if not channel_mix:
+            # Default to display if no mix specified
+            return [ChannelSelection(
+                channel=Channel.DISPLAY.value,
+                selected=True,
+                allocation_pct=1.0,
+                rationale="Default allocation (mock mode)",
+            )]
+        
+        selections = []
+        for channel, pct in channel_mix.items():
+            selections.append(ChannelSelection(
+                channel=channel,
+                selected=True,
+                allocation_pct=pct,
+                rationale=f"Allocated {pct*100:.0f}% based on campaign config (mock mode)",
+                expected_cpm=campaign.objectives.cpm_target,
+                expected_reach=int(campaign.objectives.reach_target * pct),
+            ))
+        return selections
     
     async def aggregate_results(
         self, 
@@ -480,6 +520,7 @@ Available Channels:
 def create_portfolio_manager(
     agent_id: Optional[str] = None,
     scenario: str = "A",
+    mock_llm: bool = False,
     **kwargs
 ) -> PortfolioManager:
     """Create a Portfolio Manager instance.
@@ -487,6 +528,7 @@ def create_portfolio_manager(
     Args:
         agent_id: Optional custom agent ID
         scenario: Simulation scenario (A, B, or C)
+        mock_llm: Use mock LLM (skip actual API calls)
         **kwargs: Additional args passed to PortfolioManager
         
     Returns:
@@ -498,6 +540,7 @@ def create_portfolio_manager(
     manager = PortfolioManager(
         agent_id=agent_id,
         name=f"PortfolioManager-{scenario}",
+        mock_llm=mock_llm,
         **kwargs
     )
     

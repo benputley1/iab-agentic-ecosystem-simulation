@@ -78,6 +78,7 @@ class InventoryManager(OrchestratorAgent):
         anthropic_client: Optional[AsyncAnthropic] = None,
         model: str = L1_MODEL,
         state_backend: Optional[StateBackend] = None,
+        mock_llm: bool = False,
         **kwargs,
     ):
         """Initialize the Inventory Manager.
@@ -88,6 +89,7 @@ class InventoryManager(OrchestratorAgent):
             anthropic_client: Anthropic client (creates one if not provided)
             model: LLM model to use (defaults to Opus)
             state_backend: State storage backend
+            mock_llm: Use mock LLM (skip actual API calls)
             **kwargs: Additional args passed to OrchestratorAgent
         """
         super().__init__(
@@ -100,6 +102,7 @@ class InventoryManager(OrchestratorAgent):
         )
         
         self.seller_id = seller_id
+        self.mock_llm = mock_llm
         self._portfolio = portfolio or InventoryPortfolio(seller_id=seller_id)
         
         # Track active deals
@@ -225,6 +228,10 @@ class InventoryManager(OrchestratorAgent):
         Returns:
             DealDecision with action, pricing, and reasoning
         """
+        # Use mock decision in mock mode (skip LLM call)
+        if self.mock_llm:
+            return self._mock_deal_decision(request)
+        
         # Get product info
         product = self._portfolio.get_product_by_id(request.product_id)
         if not product:
@@ -494,6 +501,43 @@ class InventoryManager(OrchestratorAgent):
             for deal in self._active_deals.values()
             if deal.product_id == product_id
         )
+    
+    def _mock_deal_decision(self, request: DealRequest) -> DealDecision:
+        """Generate a mock deal decision without LLM call.
+        
+        Args:
+            request: The deal request to evaluate
+            
+        Returns:
+            DealDecision with mock accept action
+        """
+        # Simple mock logic: accept if CPM is reasonable
+        # Accept deals where offered CPM >= $5 (a reasonable floor)
+        min_acceptable_cpm = 5.0
+        
+        if request.max_cpm >= min_acceptable_cpm:
+            return DealDecision(
+                request_id=request.request_id,
+                action=DealAction.ACCEPT,
+                price=request.max_cpm,
+                impressions=request.impressions,
+                reasoning="Mock mode: Accepted deal at offered CPM",
+                confidence=0.9,
+            )
+        else:
+            return DealDecision(
+                request_id=request.request_id,
+                action=DealAction.COUNTER,
+                price=min_acceptable_cpm,
+                impressions=request.impressions,
+                reasoning=f"Mock mode: Counter-offered at ${min_acceptable_cpm} CPM floor",
+                confidence=0.8,
+                counter_offer=CounterOffer(
+                    suggested_cpm=min_acceptable_cpm,
+                    suggested_impressions=request.impressions,
+                    reasoning="Below minimum CPM threshold",
+                ),
+            )
     
     def _build_portfolio_summary(self, portfolio: InventoryPortfolio) -> str:
         """Build a text summary of the portfolio."""

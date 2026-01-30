@@ -22,7 +22,7 @@ import logging
 import random
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from .base import BaseScenario, ScenarioConfig, ScenarioMetrics
@@ -48,7 +48,14 @@ from agents.buyer.models import (
     AudienceSpec,
     Channel,
 )
-from agents.seller.models import DealRequest, DealDecision, DealAction, BuyerTier
+from agents.seller.models import (
+    DealRequest,
+    DealDecision,
+    DealAction,
+    BuyerTier,
+    DealTypeEnum,
+    AudienceSpec as SellerAudienceSpec,
+)
 from infrastructure.message_schemas import DealConfirmation
 from protocols.a2a import A2AProtocol, A2AMessage, Offer
 
@@ -120,14 +127,14 @@ class DirectDealResult:
         """Convert to standard DealConfirmation."""
         return DealConfirmation(
             deal_id=self.deal_id,
+            request_id=self.deal_id,  # Use deal_id as request_id for direct deals
             buyer_id="",
             seller_id="",
-            campaign_id=self.campaign_id,
             impressions=self.impressions,
             cpm=self.buyer_cost / self.impressions * 1000 if self.impressions > 0 else 0,
             total_cost=self.buyer_cost,
-            seller_revenue=self.seller_revenue,
             exchange_fee=0.0,  # No exchange fees
+            scenario="B",  # Scenario B - direct A2A
             timestamp=datetime.utcnow(),
         )
 
@@ -437,10 +444,14 @@ class MultiAgentScenarioB(BaseScenario):
                 # Buyer sends offer directly to seller
                 offer = Offer(
                     offer_id=deal_id,
-                    sender_id=buyer_system.buyer_id,
-                    impressions=target_impressions,
-                    cpm=target_cpm,
-                    channel=selected_channel,
+                    offerer=buyer_system.buyer_id,
+                    recipient=seller_system.seller_id,
+                    terms={
+                        "impressions": target_impressions,
+                        "cpm": target_cpm,
+                        "channel": selected_channel,
+                    },
+                    description=f"Offer for {target_impressions:,} impressions at ${target_cpm:.2f} CPM",
                 )
                 
                 # A2A hop - context rot!
@@ -453,12 +464,15 @@ class MultiAgentScenarioB(BaseScenario):
             
             # Create deal request (potentially with rotted context)
             deal_request = DealRequest(
-                deal_id=deal_id,
+                request_id=deal_id,
                 buyer_id=buyer_system.buyer_id,
                 buyer_tier=BuyerTier.AGENCY,
+                product_id="default-product",
                 impressions=target_impressions,
-                offered_cpm=target_cpm,
-                products=[],
+                max_cpm=target_cpm,
+                deal_type=DealTypeEnum.PREFERRED_DEAL,
+                flight_dates=(date.today(), date.today() + timedelta(days=30)),
+                audience_spec=SellerAudienceSpec(),
             )
             
             # Apply context rot to request data (simulating errors)
@@ -481,7 +495,7 @@ class MultiAgentScenarioB(BaseScenario):
             # === DIRECT SETTLEMENT (NO EXCHANGE VERIFICATION) ===
             
             if decision.action == DealAction.ACCEPT:
-                final_cpm = decision.accepted_cpm or target_cpm
+                final_cpm = decision.price or target_cpm
                 total_cost = final_cpm * target_impressions / 1000
                 
                 # No exchange fees! But also no verification...
