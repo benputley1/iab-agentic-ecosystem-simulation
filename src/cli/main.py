@@ -8,6 +8,12 @@ Usage:
     rtb-sim compare --report ./output/comparison.json
     rtb-sim test-scenario --scenario c --mock-llm
 
+V2 Modes (Context Window Hallucination Testing):
+    rtb-sim run --days 30 --context-pressure --volume-profile large
+    rtb-sim run --days 30 --decision-chain --lookback-window 100
+    rtb-sim run --days 30 --restart-test --crash-probability 0.02
+    rtb-sim run --days 30 --full-v2 --volume-profile medium
+
 Examples:
     # Quick test of all scenarios (1 day, mock mode)
     rtb-sim run --days 1 --mock-llm
@@ -17,6 +23,9 @@ Examples:
 
     # Test Scenario C ledger recovery
     rtb-sim test-recovery --agent test-buyer-001
+
+    # V2: Full hallucination testing with all features
+    rtb-sim run --days 30 --full-v2 --volume-profile large --output results_v2.json
 """
 
 import asyncio
@@ -33,9 +42,11 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.panel import Panel
 from rich import print as rprint
 
+from .v2_commands import V2Config, VolumeProfile, validate_v2_config, get_v2_feature_summary
+
 app = typer.Typer(
     name="rtb-sim",
-    help="IAB Agentic RTB Simulation - Compare trading models",
+    help="IAB Agentic RTB Simulation - Compare trading models (V1 + V2 modes)",
     add_completion=False,
 )
 console = Console()
@@ -99,6 +110,60 @@ def run(
         "--verbose", "-v",
         help="Verbose output",
     ),
+    # V2 Context Pressure Options
+    context_pressure: bool = typer.Option(
+        False,
+        "--context-pressure",
+        help="[V2] Enable token pressure tracking",
+    ),
+    volume_profile: Optional[str] = typer.Option(
+        None,
+        "--volume-profile",
+        help="[V2] Volume profile: small|medium|large|enterprise",
+    ),
+    context_limit: int = typer.Option(
+        200_000,
+        "--context-limit",
+        help="[V2] Context window token limit (default: 200000)",
+    ),
+    compression_loss: float = typer.Option(
+        0.20,
+        "--compression-loss",
+        help="[V2] Information loss rate on compression (default: 0.20)",
+    ),
+    # V2 Decision Chain Options
+    decision_chain: bool = typer.Option(
+        False,
+        "--decision-chain",
+        help="[V2] Enable decision chain tracking",
+    ),
+    lookback_window: int = typer.Option(
+        100,
+        "--lookback-window",
+        help="[V2] Decision reference lookback window (default: 100)",
+    ),
+    # V2 Restart Test Options
+    restart_test: bool = typer.Option(
+        False,
+        "--restart-test",
+        help="[V2] Enable restart/crash simulation",
+    ),
+    crash_probability: float = typer.Option(
+        0.01,
+        "--crash-probability",
+        help="[V2] Crash rate per hour (default: 0.01)",
+    ),
+    recovery_modes: Optional[str] = typer.Option(
+        None,
+        "--recovery-modes",
+        help="[V2] Comma-separated recovery modes (default: private_db,ledger)",
+    ),
+    # V2 Full Mode
+    full_v2: bool = typer.Option(
+        False,
+        "--full-v2",
+        help="[V2] Enable all V2 features (context pressure + decision chain + restart test)",
+    ),
 ):
     """
     Run RTB simulation across specified scenarios.
@@ -107,15 +172,50 @@ def run(
     - Scenario A: Current state with exchange fees (10-20%)
     - Scenario B: IAB Pure A2A (context rot, no persistence)
     - Scenario C: Alkimi Ledger (zero context rot, full audit trail)
+
+    V2 Modes add context window hallucination testing:
+    - --context-pressure: Track token overflow and compression
+    - --decision-chain: Track decision dependencies and cascading errors
+    - --restart-test: Simulate crashes and state recovery
+    - --full-v2: Enable all V2 features together
     """
     scenarios = parse_scenarios(scenario)
+
+    # Build V2 config from CLI args
+    v2_config = V2Config.from_cli_args(
+        context_pressure=context_pressure,
+        volume_profile=volume_profile,
+        context_limit=context_limit,
+        compression_loss=compression_loss,
+        decision_chain=decision_chain,
+        lookback_window=lookback_window,
+        restart_test=restart_test,
+        crash_probability=crash_probability,
+        recovery_modes=recovery_modes,
+        full_v2=full_v2,
+    )
+
+    # Validate V2 config
+    v2_issues = validate_v2_config(v2_config)
+    if v2_issues:
+        for issue in v2_issues:
+            console.print(f"[yellow]Warning:[/] {issue}")
+        if any("must be" in issue for issue in v2_issues):
+            console.print("[red]Aborting due to invalid V2 configuration.[/]")
+            raise typer.Exit(1)
+
+    # Build config display
+    v2_display = ""
+    if v2_config.is_v2_enabled:
+        v2_display = f"\n\n[bold magenta]V2 Mode Active[/]\n{get_v2_feature_summary(v2_config)}"
 
     console.print(Panel.fit(
         f"[bold cyan]IAB Agentic RTB Simulation[/]\n\n"
         f"Scenarios: [green]{', '.join(s.upper() for s in scenarios)}[/]\n"
         f"Days: [yellow]{days}[/]\n"
         f"Buyers: {buyers} | Sellers: {sellers}\n"
-        f"Mode: [{'green' if mock_llm else 'red'}]{'Mock LLM' if mock_llm else 'Real LLM'}[/]",
+        f"Mode: [{'green' if mock_llm else 'red'}]{'Mock LLM' if mock_llm else 'Real LLM'}[/]"
+        f"{v2_display}",
         title="Configuration",
     ))
 
@@ -128,6 +228,7 @@ def run(
         mock_llm=mock_llm,
         skip_infra=skip_infra,
         verbose=verbose,
+        v2_config=v2_config,
     ))
 
     # Display results
@@ -149,6 +250,7 @@ async def _run_simulation(
     mock_llm: bool,
     skip_infra: bool,
     verbose: bool,
+    v2_config: Optional[V2Config] = None,
 ) -> dict:
     """Run the actual simulation."""
     from ..orchestration.run_simulation import SimulationRunner
@@ -158,21 +260,31 @@ async def _run_simulation(
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task("Running simulation...", total=None)
+        # Determine task description based on mode
+        mode_str = "V2" if (v2_config and v2_config.is_v2_enabled) else "V1"
+        task = progress.add_task(f"Running simulation ({mode_str})...", total=None)
 
-        runner = SimulationRunner(
-            scenarios=scenarios,
-            days=days,
-            buyers=buyers,
-            sellers=sellers,
-            mock_llm=mock_llm,
-        )
+        # Build runner kwargs
+        runner_kwargs = {
+            "scenarios": scenarios,
+            "days": days,
+            "buyers": buyers,
+            "sellers": sellers,
+            "mock_llm": mock_llm,
+            "time_acceleration": 10000.0,  # 100x faster than default for faster results
+        }
+
+        # Add V2 config if enabled
+        if v2_config and v2_config.is_v2_enabled:
+            runner_kwargs["v2_config"] = v2_config.to_dict()
+
+        runner = SimulationRunner(**runner_kwargs)
 
         # Override to skip infra if requested
         if skip_infra:
-            progress.update(task, description="Running simulation (mock mode)...")
+            progress.update(task, description=f"Running simulation ({mode_str}, mock mode)...")
         else:
-            progress.update(task, description="Running simulation...")
+            progress.update(task, description=f"Running simulation ({mode_str})...")
 
         try:
             result = await runner.run()
@@ -439,10 +551,76 @@ def _print_markdown_comparison(result: dict):
         console.print(f"| {label} | {a} | {b} | {c} |")
 
 
+@app.command("v2-status")
+def v2_status():
+    """
+    Show V2 feature status and available options.
+
+    Lists all V2 simulation modes and their configuration options.
+    """
+    console.print(Panel.fit(
+        "[bold cyan]V2 Context Window Hallucination Testing[/]\n\n"
+        "Test single-agent reliability problems: context overflow,\n"
+        "memory loss, and hallucinations over time.",
+        title="V2 Overview",
+    ))
+
+    # Context Pressure feature
+    table1 = Table(title="Context Pressure Mode", show_header=True, header_style="bold blue")
+    table1.add_column("Option", style="cyan")
+    table1.add_column("Type")
+    table1.add_column("Default")
+    table1.add_column("Description")
+    table1.add_row("--context-pressure", "flag", "off", "Enable token pressure tracking")
+    table1.add_row("--volume-profile", "choice", "medium", "small|medium|large|enterprise")
+    table1.add_row("--context-limit", "int", "200000", "Context window token limit")
+    table1.add_row("--compression-loss", "float", "0.20", "Information loss rate on compression")
+    console.print(table1)
+    console.print()
+
+    # Decision Chain feature
+    table2 = Table(title="Decision Chain Mode", show_header=True, header_style="bold yellow")
+    table2.add_column("Option", style="cyan")
+    table2.add_column("Type")
+    table2.add_column("Default")
+    table2.add_column("Description")
+    table2.add_row("--decision-chain", "flag", "off", "Enable decision chain tracking")
+    table2.add_row("--lookback-window", "int", "100", "Decision reference lookback window")
+    console.print(table2)
+    console.print()
+
+    # Restart Test feature
+    table3 = Table(title="Restart Test Mode", show_header=True, header_style="bold green")
+    table3.add_column("Option", style="cyan")
+    table3.add_column("Type")
+    table3.add_column("Default")
+    table3.add_column("Description")
+    table3.add_row("--restart-test", "flag", "off", "Enable restart/crash simulation")
+    table3.add_row("--crash-probability", "float", "0.01", "Crash rate per hour")
+    table3.add_row("--recovery-modes", "str", "private_db,ledger", "Comma-separated recovery modes")
+    console.print(table3)
+    console.print()
+
+    # Full V2
+    console.print(Panel(
+        "[bold magenta]--full-v2[/]: Enable all V2 features together\n\n"
+        "[dim]Example:[/]\n"
+        "  rtb-sim run --days 30 --full-v2 --volume-profile large --output results_v2.json",
+        title="Full V2 Mode",
+    ))
+
+    # Volume profiles
+    console.print("\n[bold]Volume Profiles:[/]")
+    console.print("  small      -  10K requests/day,  300K/month  (Low pressure)")
+    console.print("  medium     - 100K requests/day,    3M/month  (Medium pressure)")
+    console.print("  large      -   1M requests/day,   30M/month  (High pressure)")
+    console.print("  enterprise -  10M requests/day,  300M/month  (Extreme pressure)")
+
+
 @app.command()
 def version():
     """Show version information."""
-    console.print("[cyan]IAB Agentic RTB Simulation[/] v0.1.0")
+    console.print("[cyan]IAB Agentic RTB Simulation[/] v0.2.0 (with V2 modes)")
     console.print("https://github.com/benputley1/iab-agentic-ecosystem-simulation")
 
 
