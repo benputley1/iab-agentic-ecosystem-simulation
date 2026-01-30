@@ -76,7 +76,7 @@ class PricingAgent:
     AI Ad Buyer Agent that makes real pricing decisions via Claude API.
     
     Features:
-    - Real Anthropic API calls using claude-3-haiku for cost efficiency
+    - Real Anthropic API calls using claude-sonnet-4 per IAB specs
     - Context history tracking to simulate agent memory
     - Context window limiting to simulate context rot
     - Hallucination detection by comparing decisions against ground truth bounds
@@ -90,7 +90,7 @@ class PricingAgent:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "claude-3-haiku-20240307",
+        model: str = "claude-sonnet-4-20250514",
         max_context_history: int = 100,
     ):
         """

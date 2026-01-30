@@ -253,7 +253,7 @@ async def _run_simulation(
     v2_config: Optional[V2Config] = None,
 ) -> dict:
     """Run the actual simulation."""
-    from ..orchestration.run_simulation import SimulationRunner
+    from orchestration.run_simulation import SimulationRunner
 
     with Progress(
         SpinnerColumn(),
@@ -398,14 +398,14 @@ def test_scenario(
 async def _test_single_scenario(scenario: str, mock_llm: bool, skip_infra: bool) -> dict:
     """Test a single scenario."""
     if scenario == "a":
-        from ..scenarios.scenario_a import ScenarioA, ScenarioConfig
+        from scenarios.scenario_a import ScenarioA, ScenarioConfig
         config = ScenarioConfig(mock_llm=mock_llm)
         s = ScenarioA(config)
         # Quick test
         return {"scenario": "A", "status": "ok", "config": {"mock_llm": mock_llm}}
 
     elif scenario == "b":
-        from ..scenarios.scenario_b import run_scenario_b_test
+        from scenarios.scenario_b import run_scenario_b_test
         return await run_scenario_b_test(
             days=1,
             buyers=1,
@@ -415,7 +415,7 @@ async def _test_single_scenario(scenario: str, mock_llm: bool, skip_infra: bool)
         )
 
     elif scenario == "c":
-        from ..scenarios.scenario_c import run_scenario_c_test
+        from scenarios.scenario_c import run_scenario_c_test
         return await run_scenario_c_test(
             days=1,
             buyers=1,
@@ -470,7 +470,7 @@ def test_recovery(
 
 async def _test_recovery(agent_id: str, skip_ledger: bool) -> dict:
     """Test state recovery."""
-    from ..scenarios.scenario_c import ScenarioC, MockLedgerClient
+    from scenarios.scenario_c import ScenarioC, MockLedgerClient
 
     mock_ledger = MockLedgerClient() if skip_ledger else None
 

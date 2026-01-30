@@ -21,8 +21,8 @@ from .tools.sim_tools import (
     SimRequestDealTool,
     SimCheckAvailsTool,
 )
-from ...infrastructure.redis_bus import RedisBus
-from ...infrastructure.message_schemas import (
+from infrastructure.redis_bus import RedisBus
+from infrastructure.message_schemas import (
     BidRequest,
     BidResponse,
     DealConfirmation,
@@ -145,7 +145,7 @@ class BuyerAgentWrapper:
         """
         # Connect to Redis
         if self._bus is None:
-            from ...infrastructure.redis_bus import create_redis_bus
+            from infrastructure.redis_bus import create_redis_bus
 
             self._bus = await create_redis_bus(
                 consumer_id=f"buyer-{self.buyer_id}"
@@ -447,7 +447,7 @@ class BuyerAgentWrapper:
         if self.mock_llm:
             # Use a lightweight model config for testing
             llm = LLM(
-                model="anthropic/claude-3-haiku-20240307",
+                model="claude-sonnet-4-20250514",
                 temperature=0.1,
             )
         else:

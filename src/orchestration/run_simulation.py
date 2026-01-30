@@ -309,7 +309,7 @@ class SimulationRunner:
 
     async def _initialize_scenarios(self) -> None:
         """Initialize scenario engines."""
-        from ..scenarios.base import ScenarioConfig
+        from scenarios.base import ScenarioConfig
 
         base_config = ScenarioConfig(
             num_buyers=self.config.num_buyers,
@@ -324,19 +324,19 @@ class SimulationRunner:
             scenario_code = scenario_code.lower()
 
             if scenario_code == "a":
-                from ..scenarios.scenario_a import ScenarioA
+                from scenarios.scenario_a import ScenarioA
 
                 self._scenarios_cache["a"] = ScenarioA(config=base_config)
 
             elif scenario_code == "b":
-                from ..scenarios.scenario_b import ScenarioB
+                from scenarios.scenario_b import ScenarioB
 
                 self._scenarios_cache["b"] = ScenarioB(config=base_config)
 
             elif scenario_code == "c":
                 # Import ScenarioC if it exists, otherwise create placeholder
                 try:
-                    from ..scenarios.scenario_c import ScenarioC
+                    from scenarios.scenario_c import ScenarioC
 
                     self._scenarios_cache["c"] = ScenarioC(config=base_config)
                 except ImportError:

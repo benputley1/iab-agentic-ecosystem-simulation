@@ -4,13 +4,13 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
 
-from src.agents.seller import (
+from agents.seller import (
     SellerAgentAdapter,
     SimulatedInventory,
-    Product,
     InventoryType,
 )
-from src.infrastructure.message_schemas import (
+from agents.seller.inventory import Product  # Use inventory Product for SimulatedInventory
+from infrastructure.message_schemas import (
     BidRequest,
     BidResponse,
     DealType,

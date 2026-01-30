@@ -12,7 +12,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..ground_truth.db import GroundTruthDB, CampaignState
+    from ground_truth.db import GroundTruthDB, CampaignState
 
 
 @dataclass
