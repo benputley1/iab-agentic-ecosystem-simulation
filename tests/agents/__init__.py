@@ -1,1 +1,1 @@
-"""Tests for agent implementations."""
+"""Tests for agent hierarchy."""
