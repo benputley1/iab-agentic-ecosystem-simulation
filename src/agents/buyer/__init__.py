@@ -55,6 +55,54 @@ from .tools import (
     SimRequestDealTool,
     SimCheckAvailsTool,
 )
+# L1 Portfolio Manager
+from .l1_portfolio_manager import PortfolioManager, create_portfolio_manager
+from .models import (
+    Campaign as L1Campaign,
+    CampaignObjectives,
+    CampaignStatus,
+    AudienceSpec,
+    BudgetAllocation,
+    ChannelSelection,
+    PortfolioState,
+    SpecialistTask,
+    SpecialistResult,
+    Channel,
+)
+# L2 Channel Specialists
+from .l2_branding import BrandingSpecialist, create_branding_specialist
+from .l2_mobile_app import MobileAppSpecialist, create_mobile_app_specialist
+from .l2_ctv import CTVSpecialist, create_ctv_specialist
+from .l2_performance import PerformanceSpecialist, create_performance_specialist
+from .l2_dsp import DSPSpecialist, create_dsp_specialist
+# L3 Functional Agents
+from .l3_base import (
+    FunctionalAgent,
+    ToolResult,
+    ToolExecutionStatus,
+    AgentContext,
+)
+from .l3_tools import (
+    BUYER_TOOLS,
+    SearchCriteria,
+    Product,
+    AvailsResult,
+    OrderSpec,
+    Order,
+    Deal,
+    BookingConfirmation,
+    Metrics,
+    Attribution,
+    CampaignBrief,
+    AudienceSegment,
+    CoverageEstimate,
+    get_tool_schema,
+    get_tools_for_agent,
+)
+from .l3_research import ResearchAgent
+from .l3_execution import ExecutionAgent
+from .l3_reporting import ReportingAgent
+from .l3_audience_planner import AudiencePlannerAgent
 
 __all__ = [
     # Configuration
@@ -75,4 +123,54 @@ __all__ = [
     "SimDiscoverInventoryTool",
     "SimRequestDealTool",
     "SimCheckAvailsTool",
+    # L1 Portfolio Manager
+    "PortfolioManager",
+    "create_portfolio_manager",
+    "L1Campaign",
+    "CampaignObjectives",
+    "CampaignStatus",
+    "AudienceSpec",
+    "BudgetAllocation",
+    "ChannelSelection",
+    "PortfolioState",
+    "SpecialistTask",
+    "SpecialistResult",
+    "Channel",
+    # L2 Channel Specialists
+    "BrandingSpecialist",
+    "create_branding_specialist",
+    "MobileAppSpecialist",
+    "create_mobile_app_specialist",
+    "CTVSpecialist",
+    "create_ctv_specialist",
+    "PerformanceSpecialist",
+    "create_performance_specialist",
+    "DSPSpecialist",
+    "create_dsp_specialist",
+    # L3 Base
+    "FunctionalAgent",
+    "ToolResult",
+    "ToolExecutionStatus",
+    "AgentContext",
+    # L3 Data Types
+    "BUYER_TOOLS",
+    "SearchCriteria",
+    "Product",
+    "AvailsResult",
+    "OrderSpec",
+    "Order",
+    "Deal",
+    "BookingConfirmation",
+    "Metrics",
+    "Attribution",
+    "CampaignBrief",
+    "AudienceSegment",
+    "CoverageEstimate",
+    "get_tool_schema",
+    "get_tools_for_agent",
+    # L3 Functional Agents
+    "ResearchAgent",
+    "ExecutionAgent",
+    "ReportingAgent",
+    "AudiencePlannerAgent",
 ]
